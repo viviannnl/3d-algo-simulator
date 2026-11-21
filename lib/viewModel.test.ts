@@ -38,6 +38,15 @@ describe.each(algorithms.map((a) => [a.name, a] as const))("viewModel · %s", (_
     }
   });
 
+  it("bar identities follow their values through every swap (duplicates stay distinct)", () => {
+    for (const input of [INPUT, [3, 3, 1], [2, 2, 2, 1]]) {
+      for (const v of buildSteps(algo, input)) {
+        expect(new Set(v.ids).size).toBe(input.length);
+        expect(v.ids.map((id) => input[id])).toEqual(v.dataNodes);
+      }
+    }
+  });
+
   it("highlights a pseudocode line within range for active rows", () => {
     for (const d of derived) {
       if (d.action === "compare" || d.action === "swap") {

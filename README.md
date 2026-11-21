@@ -1,11 +1,10 @@
-# AlgoViz · 3d-algo-simulator
+# Algorithm Visualizer · 3d-algo-simulator
 
 An interactive **algorithm visualizer** — watch sorting (and soon graph/tree)
 algorithms execute step by step, scrub the timeline, shuffle the input, and read a
-live execution trace. Built in a dense, cohesive **"blueprint" aesthetic** — deep
-navy, cyan accent, monospace, dot-grid — inspired by
-[Protocol Explorer](https://protocol-explorer-alpha.vercel.app/) and
-[Designed to Scale](https://designedtoscale.app).
+live execution trace. Styled as a piece of **"creamy CRT" hardware** (Model AV-1):
+a warm putty chassis, machined keys, and recessed CRT glass lit by amber and sage
+phosphor, with editorial serif type and mono spec labels.
 
 > Note: started as a 3D idea (hence the repo name); settled on **2D**, which reads
 > far more clearly for algorithms. The core model is identical either way.
@@ -25,12 +24,15 @@ input ──▶ Algorithm.trace() ──▶ Step[] ──▶ buildSteps() ──
 
 ## Stack
 
-- **Next.js 15** (App Router) + **TypeScript** — `/` catalog, `/algorithms/[slug]` visualizer
-- **Tailwind v4** on a cyan-blueprint token contract (`app/tokens.css`)
+- **Next.js 15** (App Router) + **TypeScript** — no landing page: `/` opens the first lesson; `/algorithms/[slug]` is a lesson
+- **Tailwind v4** on a creamy-CRT token contract (`app/tokens.css`, every text pair ≥ 4.5:1)
 - **Zustand** playback store · **Framer Motion** FLIP swap animation
-- **Fira Code** — monospace throughout for blueprint precision
+- **Instrument Serif** (display) · **Inter** (UI) · **IBM Plex Mono** (labels, data)
 
 ## Features
+
+- **A course, not a catalog** — a sidebar of chapters (Sorting / Graphs / Trees) and lessons; watching
+  a lesson to the end marks it complete (kept in this browser), and a *Next* key lights up to move on.
 
 - **Dense telemetry rail** — live comparisons / swaps / sorted counters, pseudocode with
   the current line lit, and a scrollable **step-trace table** (click any row to jump).
@@ -42,13 +44,15 @@ input ──▶ Algorithm.trace() ──▶ Step[] ──▶ buildSteps() ──
 ## Project layout
 
 ```
-app/              catalog page, visualizer route, theme + layout
-components/        TopBar, catalog/*, visualizer/* (stage, rail, transport, input)
+app/              / → first lesson, lesson route, theme + layout
+components/        TopBar, course/CourseSidebar, visualizer/* (stage, rail, transport, input)
 lib/
   types.ts        Step / Frame / Algorithm contracts
   algorithms/     trace generators (bubbleSort) + catalog metadata
   viewModel.ts    trace → drawable frames + derived telemetry
   store.ts        Zustand playback store
+  course.ts       catalog read as a course (location, prev/next lesson)
+  progress.ts     completed lessons (localStorage, failure-tolerant)
 ```
 
 ## Develop
@@ -70,8 +74,26 @@ npm test          # run the suite
 npm run test:cov  # with coverage
 ```
 
-Current: **539 tests**, ~99% statement coverage on `lib/` (all sort generators 100%).
-UI-layer (browser) coverage is a separate pass — see the `ui-testing` skill.
+Current: **550 tests**, ~99% statement coverage on `lib/` (all sort generators 100%).
+
+### Browser (UI) suite — `e2e/`
+
+Playwright against the real production build (built into `.next-e2e`, so it never
+collides with a running `npm run dev`). Seven layers: deterministic fixtures
+(seeded `Math.random`, controlled clock), behavior, a full state matrix
+(`e2e/state-matrix.md`), visual regression (desktop + 390px phone), axe
+WCAG 2.1 AA + a Tab walk, measured JS coverage, and a strict console.
+
+```bash
+cd e2e && npm install            # once (uses your installed Google Chrome)
+npx playwright test              # 100 tests (99 run + 1 phone-only skip on desktop), ~2 min
+npx playwright test --update-snapshots   # ONLY after an intended design change — inspect the diff first
+rm -rf .coverage && npx playwright test && node coverage-report.mjs   # coverage of the app's own JS
+npx playwright show-report       # HTML report, traces for failures
+```
+
+Current: **99 passing, 3/3 consecutive green runs**, 100% of app functions executed.
+Baselines are per-OS (`*-darwin.png`); generate Linux ones in CI's image before gating on them.
 
 ## Roadmap
 

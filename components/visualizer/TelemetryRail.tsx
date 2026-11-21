@@ -12,20 +12,22 @@ interface Props {
   onSelect: (step: number) => void;
 }
 
-function Stat({ label, value, color = "var(--text-primary)" }: { label: string; value: ReactNode; color?: string }) {
+function Stat({ label, value, led }: { label: string; value: ReactNode; led: string }) {
   return (
-    <div className="bp-frame bg-[var(--background-surface)] border border-[var(--border-shell)] px-3 py-2">
-      <div className="text-[10px] tracking-widest uppercase text-[var(--text-muted)]">{label}</div>
-      <div className="text-[20px] font-bold tabular-nums leading-tight" style={{ color }}>{value}</div>
+    <div data-testid={`stat-${label.toLowerCase()}`} className="px-3 py-3 border-r border-[var(--seam)] last:border-r-0">
+      <div className="label flex items-center gap-1.5 mb-1">
+        <span className="led" style={{ background: led }} />{label}
+      </div>
+      <div className="font-display text-[34px] leading-[1] tabular-nums text-[var(--ink)]">{value}</div>
     </div>
   );
 }
 
 function Legend({ c, t }: { c: string; t: string }) {
   return (
-    <span className="flex items-center gap-1">
-      <span className="w-2 h-2" style={{ background: c }} />
-      <span className="text-[var(--text-muted)]">{t}</span>
+    <span className="flex items-center gap-1.5">
+      <span className="led" style={{ background: c }} />
+      <span>{t}</span>
     </span>
   );
 }
@@ -34,81 +36,96 @@ export function TelemetryRail({ trace, current, time, space, pseudocode, onSelec
   const cur = trace[current];
   const rowRef = useRef<HTMLButtonElement | null>(null);
 
-  useEffect(() => { rowRef.current?.scrollIntoView({ block: "nearest" }); }, [current]);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep the current row visible by scrolling the list only. scrollIntoView would also
+  // scroll the page, which on phones jumped the whole lesson down to the trace on load.
+  useEffect(() => {
+    const row = rowRef.current, list = listRef.current;
+    if (!row || !list) return;
+    const top = row.offsetTop; // the list is position:relative, so this is relative to it
+    if (top < list.scrollTop) list.scrollTop = top;
+    else if (top + row.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = top + row.offsetHeight - list.clientHeight;
+  }, [current]);
 
   const meta = ACTION_META[cur?.action ?? "init"];
 
   return (
-    <div className="w-full lg:w-[384px] shrink-0 bg-[var(--background-shell)] border-t lg:border-t-0 lg:border-l border-[var(--border-shell)] flex flex-col relative z-20 min-h-0">
-      <div className="flex items-center justify-between px-4 h-10 border-b border-[var(--border-shell)] bg-[var(--background-surface)]">
-        <span className="text-[11px] tracking-[0.2em] uppercase text-[var(--primary)] flex items-center gap-2">
-          <span className="w-1.5 h-1.5 bg-[var(--primary)] bp-pulse" />telemetry
-        </span>
-        <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest bp-hatch px-2 py-0.5">pass {cur?.pass ?? 1}</span>
+    <aside data-testid="telemetry-rail"
+      className="w-auto lg:w-[360px] shrink-0 mx-3 mb-4 sm:mx-5 lg:ml-2 lg:mt-5 lg:mb-5 flex flex-col min-h-0 relative z-20 rounded-[var(--radius-card)] bg-[var(--chassis-raised)] border border-[var(--seam)] shadow-[var(--shadow-card)] overflow-hidden">
+      <div className="flex items-center justify-between px-4 h-11 border-b border-[var(--seam)]">
+        <span className="font-display text-[20px] leading-none text-[var(--ink)]">Telemetry</span>
+        <span className="label px-2 py-[3px] rounded-[4px] bg-[var(--chassis-sunk)] shadow-[var(--shadow-tray)] !text-[var(--ink-2)]">pass {cur?.pass ?? 1}</span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 p-3 border-b border-[var(--border-shell)]">
-        <Stat label="Step" value={<>{current}<span className="text-[var(--text-muted)] text-[13px]">/{trace.length - 1}</span></>} color="var(--primary)" />
-        <Stat label="Cmp" value={cur?.comparisons ?? 0} color="var(--compare)" />
-        <Stat label="Swap" value={cur?.swaps ?? 0} color="var(--swap)" />
-        <Stat label="Sorted" value={cur?.sortedCount ?? 0} color="var(--sorted)" />
+      <div className="grid grid-cols-4 border-b border-[var(--seam)]">
+        <Stat label="Step" led="var(--signal)" value={<>{current}<span className="text-[var(--ink-3)] text-[15px] font-sans">/{trace.length - 1}</span></>} />
+        <Stat label="Cmp" led="var(--compare-ink)" value={cur?.comparisons ?? 0} />
+        <Stat label="Swap" led="var(--swap-ink)" value={cur?.swaps ?? 0} />
+        <Stat label="Sorted" led="var(--sorted-ink)" value={cur?.sortedCount ?? 0} />
       </div>
 
-      <div className="flex gap-2 px-3 py-3 border-b border-[var(--border-shell)]">
+      <dl className="px-4 py-2.5 border-b border-[var(--seam)] text-[12px]">
         {([["Time", time], ["Space", space]] as const).map(([label, val]) => (
-          <div key={label} className="flex-1 flex items-center justify-between bg-[var(--background-surface)] border border-[var(--border-shell)] px-3 py-2">
-            <span className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">{label}</span>
-            <span className="text-[13px] font-bold text-[var(--primary)]" style={{ textShadow: "0 0 8px var(--primary-dim)" }}>{val || "—"}</span>
+          <div key={label} className="flex items-baseline gap-2 py-[3px]">
+            <dt className="label">{label}</dt>
+            <span aria-hidden="true" className="flex-1 border-b border-dotted border-[var(--seam-strong)] translate-y-[-3px]" />
+            <dd className="font-mono font-medium text-[var(--ink)]">{val || "—"}</dd>
           </div>
         ))}
-      </div>
+      </dl>
 
-      <div className="px-3 py-3 border-b border-[var(--border-shell)]">
-        <div className="text-[10px] tracking-widest uppercase text-[var(--text-muted)] mb-2">pseudocode</div>
-        <div className="bg-[var(--background-app)] border border-[var(--border-shell)] py-2">
+      <div className="px-4 py-3 border-b border-[var(--seam)]">
+        <div className="label mb-2">pseudocode</div>
+        <div className="glass !rounded-[12px] py-2.5 font-mono">
           {pseudocode.map((line, idx) => {
             const active = cur?.line === idx;
             return (
-              <div key={idx} className="flex items-center text-[12px] leading-relaxed" style={{ background: active ? "var(--primary-dim)" : "transparent", borderLeft: active ? "2px solid var(--primary)" : "2px solid transparent" }}>
-                <span className="w-7 text-right pr-2 text-[var(--text-muted)] select-none tabular-nums">{idx + 1}</span>
-                <span className="whitespace-pre" style={{ color: active ? "var(--primary)" : "var(--text-secondary)" }}>{line}</span>
+              <div key={idx} data-testid="pseudo-line" aria-current={active ? "true" : undefined}
+                className="relative z-10 flex items-center text-[12px] leading-[1.75] pr-2"
+                style={{ background: active ? "var(--phosphor-faint)" : "transparent" }}>
+                <span className="w-5 text-center select-none" style={{ color: "var(--phosphor-hot)" }} aria-hidden="true">{active ? "▸" : ""}</span>
+                <span className="w-5 text-right pr-2 text-[var(--phosphor-dim)] select-none tabular-nums">{idx + 1}</span>
+                <span className="whitespace-pre" style={{ color: active ? "var(--phosphor-hot)" : "var(--phosphor-dim)", textShadow: active ? "var(--glow-tight)" : "none" }}>{line}</span>
               </div>
             );
           })}
         </div>
       </div>
 
-      <div className="px-3 py-3 border-b border-[var(--border-shell)]">
-        <div className="text-[10px] tracking-widest uppercase text-[var(--text-muted)] mb-2">execution log</div>
-        <div className="bg-[var(--background-surface)] border-l-2 px-3 py-2 text-[12px] text-[var(--text-primary)] leading-relaxed min-h-[52px]" style={{ borderColor: meta.color }}>
-          <span className="font-bold mr-2" style={{ color: meta.color }}>{meta.glyph} {meta.label}</span>
-          {cur?.note}
+      <div className="px-4 py-3 border-b border-[var(--seam)]">
+        <div className="label mb-2">execution log</div>
+        <div className="flex gap-2.5 text-[13px] text-[var(--ink)] leading-relaxed min-h-[44px]">
+          <span className="font-mono font-semibold text-[11px] tracking-[0.06em] pt-[2px] shrink-0" style={{ color: meta.color }}>{meta.glyph} {meta.label}</span>
+          <span>{cur?.note}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between px-4 h-8 border-b border-[var(--border-shell)] text-[10px] tracking-widest uppercase text-[var(--text-muted)] shrink-0">
+      <div className="label flex items-center justify-between px-4 h-9 border-b border-[var(--seam)] shrink-0">
         <span>step trace</span>
         <span className="flex items-center gap-3">
-          <Legend c="var(--compare)" t="cmp" /><Legend c="var(--swap)" t="swap" /><Legend c="var(--sorted)" t="lock" />
+          <Legend c="var(--compare-ink)" t="cmp" /><Legend c="var(--swap-ink)" t="swap" /><Legend c="var(--sorted-ink)" t="lock" />
         </span>
       </div>
-      <div className="flex-1 min-h-[160px] overflow-y-auto bp-scroll">
+      <div ref={listRef} className="relative flex-1 min-h-[160px] max-h-[50vh] lg:max-h-none overflow-y-auto scroll-quiet font-mono">
         {trace.map((t) => {
           const isCur = t.index === current;
           const m = ACTION_META[t.action];
           return (
             <button key={t.index} ref={isCur ? rowRef : undefined} onClick={() => onSelect(t.index)}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-left border-b border-[var(--border-card)] transition-colors hover:bg-[var(--background-card-hover)] focus:outline-none focus-visible:ring-1 focus-visible:ring-[var(--primary)]"
-              style={{ background: isCur ? "var(--primary-dim)" : "transparent", borderLeft: isCur ? "2px solid var(--primary)" : "2px solid transparent" }}>
-              <span className="w-8 text-[11px] tabular-nums text-[var(--text-muted)] shrink-0">{String(t.index).padStart(2, "0")}</span>
-              <span className="w-1.5 h-1.5 shrink-0" style={{ background: m.color, boxShadow: isCur ? `0 0 6px ${m.color}` : "none" }} />
-              <span className="w-12 text-[11px] font-bold shrink-0" style={{ color: m.color }}>{m.label}</span>
-              <span className="w-14 text-[11px] tabular-nums text-[var(--text-secondary)] shrink-0">{t.i !== undefined ? `[${t.i},${t.j}]` : "—"}</span>
-              <span className="flex-1 truncate text-[11px] text-[var(--text-muted)]">{t.values ? `${t.values[0]} ${t.action === "swap" ? "⇄" : "◇"} ${t.values[1]}` : t.note}</span>
+              data-testid="trace-row" aria-current={isCur ? "step" : undefined} aria-label={`Jump to step ${t.index}: ${m.label}`}
+              className="relative w-full flex items-center gap-2 px-4 py-[7px] text-left text-[11px] border-b border-[var(--seam)] last:border-b-0 transition-colors duration-150 hover:bg-[var(--chassis)] focus-visible:outline-offset-[-2px]"
+              style={{ background: isCur ? "var(--chassis-sunk)" : undefined }}>
+              {isCur && <span aria-hidden="true" className="absolute left-0 top-1 bottom-1 w-[3px] rounded-r bg-[var(--signal)]" />}
+              {/* the current row sits on the sunk tint, where ink-3 would drop below AA — use ink-2 */}
+              <span className="w-7 tabular-nums shrink-0" style={{ color: isCur ? "var(--ink-2)" : "var(--ink-3)" }}>{String(t.index).padStart(2, "0")}</span>
+              <span className="w-12 font-semibold shrink-0" style={{ color: m.color }}>{m.label}</span>
+              <span className="w-14 tabular-nums text-[var(--ink-2)] shrink-0">{t.i !== undefined ? `[${t.i},${t.j}]` : "—"}</span>
+              <span className="flex-1 truncate font-sans" style={{ color: isCur ? "var(--ink)" : "var(--ink-3)" }}>{t.values ? `${t.values[0]} ${t.action === "swap" ? "⇄" : "◇"} ${t.values[1]}` : t.note}</span>
             </button>
           );
         })}
       </div>
-    </div>
+    </aside>
   );
 }

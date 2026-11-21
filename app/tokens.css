@@ -1,60 +1,81 @@
 /* ===========================================================================
-   AlgoViz — cyan blueprint token contract (dark-only, instrument aesthetic).
-   Ported from the OJO prototype design, adapted for the Next.js app.
-   Reference these tokens everywhere; never a literal color in component code.
+   Algorithm Visualizer · Model AV-1 — "creamy CRT" token contract.
+   The app is a piece of precision hardware: warm putty ABS chassis, machined
+   keys, and recessed CRT glass wells lit by amber/sage phosphor.
+   One theme by design (the chassis IS the identity). Every text pair below is
+   ≥ 4.5:1; component code references tokens only, never a literal colour.
    =========================================================================== */
 :root {
-  /* ---- Cyan blueprint accent ---- */
-  --primary: #3AD1F0;
-  --primary-contrast: #042029;
-  --primary-dim: rgba(58, 209, 240, 0.14);
-  --primary-line: rgba(58, 209, 240, 0.40);
-  --accent: #3AD1F0;
+  /* ---- Chassis (cream ABS) ---- */
+  --chassis: #F2EDE2;            /* page */
+  --chassis-raised: #FAF7F0;     /* keys, cards, raised panels */
+  --chassis-sunk: #E9E2D4;       /* trays, grooves, current row */
+  --seam: #D6CEBF;               /* 1px structural hairlines */
+  --seam-strong: #C8BFAE;        /* key borders */
+  --seam-light: #FFFFFF;         /* top highlight on raised parts */
 
-  /* ---- Algorithm state colors (load-bearing) ---- */
-  --compare: #FFC24B;
-  --compare-dim: rgba(255, 194, 75, 0.16);
-  --swap: #FF6B6B;
-  --swap-dim: rgba(255, 107, 107, 0.16);
-  --sorted: #34E5B0;
-  --sorted-dim: rgba(52, 229, 176, 0.16);
-  --success: #34E5B0;
-  --danger: #FF6B6B;
+  /* ---- Ink on cream ---- */
+  --ink: #24211D;                /* 14.9:1 */
+  --ink-2: #4A443B;              /*  8.6:1 */
+  --ink-3: #6B6357;              /*  5.0:1 — small labels */
 
-  /* ---- Surfaces (obsidian-navy, matte) ---- */
-  --background: #0A0F16;
-  --background-app: #0A0F16;
-  --background-shell: #0C121B;
-  --background-surface: #101A25;
-  --background-card: #101A25;
-  --background-card-hover: #15212E;
-  --background-elevated: #15212E;
+  /* ---- Signal accent (one, used sparingly: Play key, focus, notches) ---- */
+  --signal: #E2733A;
+  --signal-hi: #EE8A52;          /* key top */
+  --signal-edge: #C35C26;        /* key border */
+  --signal-shadow: #B9551F;      /* key skirt */
+  --signal-ink: #A04416;         /* text/lines on cream, ≥ 4.8:1 even on --chassis-sunk */
+  --focus-ring: #B8541A;
 
-  /* ---- Borders / grid ---- */
-  --border: #2B3D4F;
-  --border-card: #1C2A38;
-  --border-shell: #1C2A38;
-  --grid-dot: rgba(58, 209, 240, 0.11);
-  --grid-line: rgba(58, 209, 240, 0.08);
+  /* ---- CRT glass ---- */
+  --glass: #181A17;
+  --glass-deep: #0F110E;
+  --glass-edge: #2C2924;         /* bezel ring */
+  --phosphor: #E89B3C;           /* amber — 8.0:1 on glass */
+  --phosphor-hot: #FFC97A;       /* brightest beam: active/compare */
+  --phosphor-dim: #BB9E77;       /* secondary glass text, ≥ 6.5:1 */
+  --phosphor-faint: rgba(232, 155, 60, 0.16);
+  --phosphor-line: rgba(232, 155, 60, 0.38);
+  --phosphor-grid: rgba(232, 155, 60, 0.09);
+  --glow-tight: 0 0 8px rgba(232, 155, 60, 0.35);
 
-  /* ---- Text ---- */
-  --text-primary: #E9F1F8;
-  --text-secondary: #9DB0C2;
-  --text-muted: #5F7284;
+  /* ---- Algorithm states (on glass) ---- */
+  --compare: #FFD99A;            /* hottest beam — reads brighter than idle amber, not just yellower */
+  --compare-dim: rgba(255, 214, 150, 0.46);
+  --swap: #FF7A5C;
+  --swap-dim: rgba(255, 122, 92, 0.42);
+  --sorted: #8FB38A;
+  --sorted-dim: rgba(143, 179, 138, 0.26);
+  --idle: #E89B3C;
+  --idle-dim: rgba(232, 155, 60, 0.16);
 
-  /* ---- Glow / ambient ---- */
-  --focus-ring: #3AD1F0;
-  --glowing-pointer-glow: 0 0 10px rgba(58, 209, 240, 0.85);
-  --ambient-bleed-stage: radial-gradient(circle at center, rgba(58, 209, 240, 0.07) 0%, transparent 60%);
+  /* ---- Algorithm states (printed on cream — darker ink variants) ---- */
+  --compare-ink: #8A5A12;        /* 5.0:1 */
+  --swap-ink: #A8402A;           /* 5.2:1 */
+  --sorted-ink: #3F6B3A;         /* 5.2:1 */
 
-  /* ---- Typography (Fira Code mono — blueprint precision) ---- */
-  --font-family-body: var(--font-fira), "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* ---- Depth ---- */
+  --shadow-key: inset 0 1px 0 var(--seam-light), 0 2px 0 var(--seam), 0 3px 8px rgba(70, 55, 30, 0.08);
+  --shadow-key-pressed: inset 0 1px 2px rgba(70, 55, 30, 0.18), 0 0 0 var(--seam);
+  --shadow-card: inset 0 1px 0 var(--seam-light), 0 1px 1px rgba(70, 55, 30, 0.05), 0 6px 18px -8px rgba(70, 55, 30, 0.18);
+  --shadow-card-hover: inset 0 1px 0 var(--seam-light), 0 1px 1px rgba(70, 55, 30, 0.06), 0 14px 30px -12px rgba(70, 55, 30, 0.28);
+  --shadow-well: inset 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-tray: inset 0 1px 3px rgba(70, 55, 30, 0.16), 0 1px 0 var(--seam-light);
 
-  /* ---- Motion ---- */
-  --motion-duration-fast: 150ms;
-  --motion-duration-normal: 300ms;
-  --crt-grid-size: 26px;
+  /* ---- Type ---- */
+  --font-family-body: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-family-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --font-family-display: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  --tracking-label: 0.08em;
 
   /* ---- Radii ---- */
-  --radius-card: 2px;
+  --radius-key: 8px;
+  --radius-card: 14px;
+  --radius-bezel: 26px;
+  --radius-glass: 18px;
+
+  /* ---- Motion ---- */
+  --motion-fast: 140ms;
+  --motion-normal: 240ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
