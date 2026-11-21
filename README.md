@@ -1,79 +1,74 @@
-# 3d-algo-simulator
+# AlgoViz · 3d-algo-simulator
 
-An interactive **3D algorithm simulator** — watch sorting, graph, and tree algorithms
-execute step by step in a real 3D scene you can rotate, zoom, and scrub through.
+An interactive **algorithm visualizer** — watch sorting (and soon graph/tree)
+algorithms execute step by step, scrub the timeline, shuffle the input, and read a
+live execution trace. Built in a dense, cohesive **"blueprint" aesthetic** — deep
+navy, cyan accent, monospace, dot-grid — inspired by
+[Protocol Explorer](https://protocol-explorer-alpha.vercel.app/) and
+[Designed to Scale](https://designedtoscale.app).
 
-Inspired by [Designed to Scale](https://designedtoscale.app) (which uses 2D animated
-diagrams for *system design*) — this project applies the same "replayable, step-based"
-teaching model to **algorithms**, in genuine 3D.
+> Note: started as a 3D idea (hence the repo name); settled on **2D**, which reads
+> far more clearly for algorithms. The core model is identical either way.
 
-## Concept
+## The core idea — *instrument, don't animate*
 
-The whole thing rests on one idea: **instrument, don't animate.**
-
-Instead of hand-authoring animations, we run the real algorithm and record every
-meaningful event into a list of steps (a *trace*). The 3D scene is then a pure function
-of `(initial input, steps[0..currentStep])`. Scrubbing the timeline just replays steps
-up to an index — which gives play / pause / rewind / scrub **for free**.
+The algorithm runs once and emits a flat list of steps (a **trace**). The UI is then
+a pure function of `(input, steps[0…currentStep])` — which is what makes play / pause /
+rewind / **scrub** fall out for free, and what lets you **shuffle or enter a custom
+array** and instantly get a new, correct visualization (the trace just regenerates).
 
 ```
-Algorithm  ──instrument──▶  Step[]  ──render──▶  3D scene
-                               ▲
-                          timeline / scrubber
+input ──▶ Algorithm.trace() ──▶ Step[] ──▶ buildSteps() ──▶ frames ──▶ blueprint UI
+                                               ▲
+                                        scrubber / keyboard
 ```
 
-## Planned architecture
+## Stack
 
-| Layer | Choice |
-|-------|--------|
-| App shell & routing | **Next.js + TypeScript** (`/algorithms/[slug]`) |
-| 3D rendering | **React Three Fiber** (`@react-three/fiber`) + **drei** |
-| Playback state | **Zustand** (current step index, play/pause, speed) |
-| Interpolation | drei `useSpring` / Framer Motion for smooth transitions between states |
-| Camera | drei `<OrbitControls>` — rotate/zoom the structure (where 3D earns its keep) |
+- **Next.js 15** (App Router) + **TypeScript** — `/` catalog, `/algorithms/[slug]` visualizer
+- **Tailwind v4** on a cyan-blueprint token contract (`app/tokens.css`)
+- **Zustand** playback store · **Framer Motion** FLIP swap animation
+- **Fira Code** — monospace throughout for blueprint precision
 
-### Trace format (example — bubble sort)
+## Features
 
-```ts
-type Step =
-  | { type: 'compare'; i: number; j: number }
-  | { type: 'swap'; i: number; j: number }
-  | { type: 'markSorted'; i: number };
+- **Dense telemetry rail** — live comparisons / swaps / sorted counters, pseudocode with
+  the current line lit, and a scrollable **step-trace table** (click any row to jump).
+- **Dimensional stage** — bars scale to value on a dot-grid with a value axis, a pulsing
+  **compare/swap bracket**, and real sliding **FLIP** animation on swaps.
+- **Shuffle & custom input** — reshuffle, pick array size (6/8/10/12), or type your own.
+- **Keyboard** — `space` play/pause · `←/→` step · `s` shuffle.
+
+## Project layout
+
+```
+app/              catalog page, visualizer route, theme + layout
+components/        TopBar, catalog/*, visualizer/* (stage, rail, transport, input)
+lib/
+  types.ts        Step / Frame / Algorithm contracts
+  algorithms/     trace generators (bubbleSort) + catalog metadata
+  viewModel.ts    trace → drawable frames + derived telemetry
+  store.ts        Zustand playback store
 ```
 
-The renderer walks `steps[0..currentStep]` to derive positions and colors
-(comparing = yellow, swapping = red, sorted = green).
+## Develop
+
+```bash
+npm install
+npm run dev     # http://localhost:3000
+```
 
 ## Roadmap
 
-- [ ] **Step 1** — Bubble sort as animated cubes + OrbitControls + working scrub bar
-      (proves the trace → render → scrub loop end to end)
-- [ ] **Step 2** — Transport controls: Zustand store, speed slider, step ◀ ▶
-- [ ] **Step 3** — A graph algorithm (BFS) — forces the trace format to generalize
-      beyond arrays
-- [ ] **Step 4** — Lesson shell: sidebar grouped by category, routing, per-algorithm
-      markdown explanation panel
-- [ ] **Step 5** — Polish: code-sync panel (highlight current line), materials/lighting,
-      custom input (shuffle / enter your own array)
+- [x] Bubble Sort — full trace, blueprint UI, scrub, shuffle, keyboard
+- [ ] Insertion / Quick / Merge sort trace generators (cards already scaffolded)
+- [ ] Graph algorithms (BFS/DFS/Dijkstra) — generalize the trace model beyond arrays
+- [ ] Tree algorithms (BST insert, traversal)
+- [ ] Code-sync panel polish, per-algorithm theming
 
-## UI layout (target)
+## Design provenance
 
-```
-┌────────────┬──────────────────────────────┬───────────┐
-│  Sidebar   │                              │  Code     │
-│  Sorting   │        3D <Canvas>           │  panel    │
-│  Graphs    │   (OrbitControls scene)      │  (current │
-│  Trees     │                              │  line hl) │
-│  DP        │                              │           │
-├────────────┴──────────────────────────────┴───────────┤
-│  ◀  ▶   ⏯   [======scrubber======]   speed ▾          │
-└────────────────────────────────────────────────────────┘
-```
+The visual design was explored as a prototype in **OJO** (ojo.art), then hand-ported
+into this Next.js app with the trace-driven architecture above.
 
-## Status
-
-🌱 Just getting started — repo scaffolding + plan. Code lands with Step 1.
-
-## License
-
-TBD
+🤖 Generated with [Claude Code](https://claude.com/claude-code)

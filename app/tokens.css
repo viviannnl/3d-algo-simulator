@@ -1,0 +1,60 @@
+/* ===========================================================================
+   AlgoViz — cyan blueprint token contract (dark-only, instrument aesthetic).
+   Ported from the OJO prototype design, adapted for the Next.js app.
+   Reference these tokens everywhere; never a literal color in component code.
+   =========================================================================== */
+:root {
+  /* ---- Cyan blueprint accent ---- */
+  --primary: #3AD1F0;
+  --primary-contrast: #042029;
+  --primary-dim: rgba(58, 209, 240, 0.14);
+  --primary-line: rgba(58, 209, 240, 0.40);
+  --accent: #3AD1F0;
+
+  /* ---- Algorithm state colors (load-bearing) ---- */
+  --compare: #FFC24B;
+  --compare-dim: rgba(255, 194, 75, 0.16);
+  --swap: #FF6B6B;
+  --swap-dim: rgba(255, 107, 107, 0.16);
+  --sorted: #34E5B0;
+  --sorted-dim: rgba(52, 229, 176, 0.16);
+  --success: #34E5B0;
+  --danger: #FF6B6B;
+
+  /* ---- Surfaces (obsidian-navy, matte) ---- */
+  --background: #0A0F16;
+  --background-app: #0A0F16;
+  --background-shell: #0C121B;
+  --background-surface: #101A25;
+  --background-card: #101A25;
+  --background-card-hover: #15212E;
+  --background-elevated: #15212E;
+
+  /* ---- Borders / grid ---- */
+  --border: #2B3D4F;
+  --border-card: #1C2A38;
+  --border-shell: #1C2A38;
+  --grid-dot: rgba(58, 209, 240, 0.11);
+  --grid-line: rgba(58, 209, 240, 0.08);
+
+  /* ---- Text ---- */
+  --text-primary: #E9F1F8;
+  --text-secondary: #9DB0C2;
+  --text-muted: #5F7284;
+
+  /* ---- Glow / ambient ---- */
+  --focus-ring: #3AD1F0;
+  --glowing-pointer-glow: 0 0 10px rgba(58, 209, 240, 0.85);
+  --ambient-bleed-stage: radial-gradient(circle at center, rgba(58, 209, 240, 0.07) 0%, transparent 60%);
+
+  /* ---- Typography (Fira Code mono — blueprint precision) ---- */
+  --font-family-body: var(--font-fira), "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---- Motion ---- */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 300ms;
+  --crt-grid-size: 26px;
+
+  /* ---- Radii ---- */
+  --radius-card: 2px;
+}
