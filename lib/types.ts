@@ -6,23 +6,18 @@
  * makes play / pause / rewind / scrub fall out for free. No per-frame hacks.
  */
 
-/** One recorded event in an algorithm's execution. */
+/** One recorded event. `line` points at the pseudocode line it corresponds to. */
 export type SortStep =
-  | { type: "compare"; i: number; j: number; note?: string }
-  | { type: "swap"; i: number; j: number; note?: string }
-  | { type: "markSorted"; index: number; note?: string };
+  | { type: "compare"; i: number; j: number; line?: number; note?: string }
+  | { type: "swap"; i: number; j: number; line?: number; note?: string }
+  | { type: "markSorted"; index: number; line?: number; note?: string };
 
 /** A derived snapshot of the array at a given step — what the renderer draws. */
 export interface SortFrame {
-  /** Current order of values. */
   array: number[];
-  /** Indices currently being compared, if any. */
   comparing: [number, number] | null;
-  /** Indices currently being swapped, if any. */
   swapping: [number, number] | null;
-  /** Indices locked into their final sorted position. */
   sorted: Set<number>;
-  /** Human-readable description of what this step does. */
   caption: string;
 }
 
@@ -30,10 +25,8 @@ export interface Algorithm {
   slug: string;
   name: string;
   category: string;
-  /** One-line description for the detail panel. */
   summary: string;
   complexity: { time: string; space: string };
-  /** Source lines, for the future code-sync panel. */
   pseudocode: string[];
   /** Produce the full trace for a given input. */
   trace: (input: number[]) => SortStep[];

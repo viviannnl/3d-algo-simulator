@@ -80,7 +80,9 @@ export function VisualizerStage({ view, derived }: Props) {
               {view.dataNodes.map((val, idx) => {
                 const isActive = view.activeNodes.includes(idx);
                 const isSorted = view.sortedNodes.includes(idx);
-                const heightPct = Math.max((val / maxVal) * 100, 7);
+                // Scale to 90% of the chart so the label always has headroom above
+                // the tallest bar. Height is a pure function of value — no clamping.
+                const heightPct = Math.max((val / maxVal) * 90, 5);
 
                 let color = "var(--primary)";
                 let dim = "var(--primary-dim)";
@@ -89,9 +91,11 @@ export function VisualizerStage({ view, derived }: Props) {
                 else if (isSorted) { color = "var(--sorted)"; dim = "var(--sorted-dim)"; line = "var(--sorted)"; }
 
                 return (
-                  <motion.div key={val} layout transition={{ type: "spring", stiffness: 520, damping: 34 }} className="relative flex-1 flex flex-col justify-end items-center h-full">
-                    <motion.span layout="position" className="mb-1.5 text-[13px] font-bold tabular-nums" style={{ color }}>{val}</motion.span>
-                    <div className="w-full relative transition-colors" style={{
+                  <motion.div key={val} layout transition={{ type: "spring", stiffness: 520, damping: 34 }} className="relative flex-1 h-full">
+                    {/* value label floats just above the bar top — never affects height */}
+                    <motion.span layout="position" className="absolute left-0 right-0 text-center text-[13px] font-bold tabular-nums" style={{ bottom: `calc(${heightPct}% + 5px)`, color }}>{val}</motion.span>
+                    {/* bar pinned to the baseline */}
+                    <div className="absolute bottom-0 left-0 right-0 transition-colors" style={{
                       height: `${heightPct}%`,
                       background: `linear-gradient(to top, ${dim}, color-mix(in srgb, ${dim} 40%, transparent))`,
                       borderLeft: `1px solid ${line}`, borderRight: `1px solid ${line}`, borderTop: `2px solid ${color}`,

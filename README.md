@@ -58,10 +58,25 @@ npm install
 npm run dev     # http://localhost:3000
 ```
 
+## Tests
+
+Pure-logic unit tests (Vitest) cover the correctness-critical layer — every
+algorithm sorts correctly across edge cases + 24 deterministic random inputs, every
+intermediate frame stays a permutation of the input, and the view-model counters /
+pseudocode mapping stay consistent.
+
+```bash
+npm test          # run the suite
+npm run test:cov  # with coverage
+```
+
+Current: **539 tests**, ~99% statement coverage on `lib/` (all sort generators 100%).
+UI-layer (browser) coverage is a separate pass — see the `ui-testing` skill.
+
 ## Roadmap
 
-- [x] Bubble Sort — full trace, blueprint UI, scrub, shuffle, keyboard
-- [ ] Insertion / Quick / Merge sort trace generators (cards already scaffolded)
+- [x] Bubble / Insertion / Selection / Quick sort — full traces, 100% covered
+- [ ] Merge sort — needs a write/overwrite step op (not swap-based)
 - [ ] Graph algorithms (BFS/DFS/Dijkstra) — generalize the trace model beyond arrays
 - [ ] Tree algorithms (BST insert, traversal)
 - [ ] Code-sync panel polish, per-algorithm theming

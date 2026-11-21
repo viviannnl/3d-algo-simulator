@@ -2,15 +2,17 @@ import type { Algorithm } from "./types";
 
 /**
  * A materialized frame the renderer draws — derived from the programmatic trace.
- * This is the bridge: our `Algorithm.trace()` stays the source of truth (the
- * "instrument, don't animate" plan), and this adapter flattens each step into a
- * drawable view. Regenerating from a new input is what makes shuffle/custom work.
+ * Our `Algorithm.trace()` stays the source of truth ("instrument, don't animate");
+ * this adapter flattens each step into a drawable view. Regenerating from a new
+ * input is what makes shuffle / custom input work.
  */
 export interface StepView {
   dataNodes: number[];
   activeNodes: number[];
   sortedNodes: number[];
   explanation: string;
+  /** pseudocode line this step maps to (undefined on the initial frame) */
+  line?: number;
 }
 
 export type StepAction = "init" | "compare" | "swap" | "mark" | "done";
@@ -42,14 +44,8 @@ export function buildSteps(algo: Algorithm, input: number[]): StepView[] {
   const steps = algo.trace(input);
   const views: StepView[] = [];
 
-  // initial frame (before any step)
   const first = algo.frameAt(input, steps, -1);
-  views.push({
-    dataNodes: first.array,
-    activeNodes: [],
-    sortedNodes: [...first.sorted],
-    explanation: "Initial unsorted array.",
-  });
+  views.push({ dataNodes: first.array, activeNodes: [], sortedNodes: [...first.sorted], explanation: "Initial unsorted array.", line: 0 });
 
   for (let k = 0; k < steps.length; k++) {
     const f = algo.frameAt(input, steps, k);
@@ -59,6 +55,7 @@ export function buildSteps(algo: Algorithm, input: number[]): StepView[] {
       activeNodes: active ? [...active] : [],
       sortedNodes: [...f.sorted],
       explanation: f.caption,
+      line: steps[k].line,
     });
   }
   return views;
@@ -90,44 +87,30 @@ export function deriveTrace(views: StepView[]): DerivedStep[] {
     let i: number | undefined;
     let j: number | undefined;
     let values: [number, number] | undefined;
-    let line = 0;
 
     if (k === 0) {
       action = "init";
-      line = 0;
     } else if (k === views.length - 1 && s.activeNodes.length === 0) {
       action = "done";
-      line = -1;
     } else if (changed && pair) {
       action = "swap";
       swaps++;
       [i, j] = pair;
       values = [s.dataNodes[i], s.dataNodes[j]];
-      line = 3;
     } else if (pair) {
       action = "compare";
       comparisons++;
       [i, j] = pair;
       values = [s.dataNodes[i], s.dataNodes[j]];
-      line = 2;
     } else if (newlySorted.length) {
       action = "mark";
-      line = 4;
     }
 
-    out.push({
-      index: k,
-      action,
-      i,
-      j,
-      values,
-      note: s.explanation,
-      line,
-      comparisons,
-      swaps,
-      pass,
-      sortedCount: s.sortedNodes.length,
-    });
+    // Prefer the explicit pseudocode line the algorithm tagged; fall back by action.
+    const fallback = action === "compare" ? 2 : action === "swap" ? 3 : action === "mark" ? 4 : action === "done" ? -1 : 0;
+    const line = s.line !== undefined ? s.line : fallback;
+
+    out.push({ index: k, action, i, j, values, note: s.explanation, line, comparisons, swaps, pass, sortedCount: s.sortedNodes.length });
   }
   return out;
 }
