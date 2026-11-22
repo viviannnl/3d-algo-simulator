@@ -2,6 +2,8 @@
 
 import type { DerivedStep, EdgeState, NetworkView, NodeState } from "@/lib/types";
 import { edgeKey } from "@/lib/types";
+import { CrtTransition, pictureOpens } from "./CrtTransition";
+import { T, at, pictureStart, stagger, type StageMode } from "@/lib/motion";
 
 const NODE: Record<Exclude<NodeState, "hidden">, { ring: string; fill: string; text: string; glow?: string }> = {
   idle: { ring: "var(--phosphor-dim)", fill: "var(--glass)", text: "var(--phosphor-dim)" },
@@ -18,18 +20,23 @@ const EDGE: Record<Exclude<EdgeState, "hidden">, { stroke: string; width: number
 };
 
 /** Graphs and trees on the CRT: SVG edges under HTML nodes, both placed in % of the glass. */
-export function NetworkStage({ view, derived, title }: { view: NetworkView; derived?: DerivedStep; title: string }) {
+export function NetworkStage({ view, derived, title, stageKey = "", mode = "retune", channel = "" }: {
+  view: NetworkView; derived?: DerivedStep; title: string; stageKey?: string; mode?: StageMode; channel?: string;
+}) {
+  const nodeAt = (i: number) => stagger(pictureStart(mode), i, mode === "intro" ? 45 : 25, 10);
+  const edgesAt = nodeAt(view.nodes.length) + 60;
   const pos = Object.fromEntries(view.nodes.map((n) => [n.id, n]));
   const done = derived?.action === "done";
   const shown = view.nodes.filter((n) => view.nodeState[n.id] !== "hidden").length;
 
   return (
     <div className="flex-1 min-h-[380px] sm:min-h-[440px] lg:min-h-0 flex p-3 sm:p-5 lg:pr-3">
-      <div className="bezel flex-1 flex min-w-0">
+      <div className={`bezel flex-1 flex min-w-0 ${mode === "intro" ? "enter-module" : ""}`} style={at(T.stage)}>
         <div className="glass glass-grid flex-1 min-w-0" data-testid="network-stage">
           {done && <div key="sweep" className="crt-sweep" aria-hidden="true" />}
+          <CrtTransition key={`t-${stageKey}`} mode={mode} channel={channel} />
 
-          <div className="crt-on absolute inset-0 flex flex-col px-5 sm:px-8 pt-5 sm:pt-6 pb-4 z-10 font-mono">
+          <div key={stageKey} className={`${mode === "retune" ? "" : "crt-on"} absolute inset-0 flex flex-col px-5 sm:px-8 pt-5 sm:pt-6 pb-4 z-10 font-mono`} style={at(pictureOpens(mode))}>
             <div className="flex items-center justify-between mb-2 text-[10px] sm:text-[11px] tracking-[0.12em] uppercase">
               <span className="flex items-center gap-2 text-[var(--phosphor)] phosphor-text">
                 <span className="led led-pulse bg-[var(--phosphor)] text-[var(--phosphor)] !shadow-[var(--glow-tight)]" />
@@ -40,7 +47,7 @@ export function NetworkStage({ view, derived, title }: { view: NetworkView; deri
 
             {/* plotting area: inset so node discs at the edges are never clipped */}
             <div className="relative flex-1 min-h-0 mx-4 my-5">
-              <svg className="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              <svg className="fade-in absolute inset-0 w-full h-full overflow-visible" style={at(edgesAt)} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                 {view.edges.map((e) => {
                   const st = view.edgeState[edgeKey(e.a, e.b)];
                   if (st === "hidden") return null;
@@ -61,21 +68,21 @@ export function NetworkStage({ view, derived, title }: { view: NetworkView; deri
                 const p = pos[e.a], q = pos[e.b];
                 const st = view.edgeState[edgeKey(e.a, e.b)];
                 return (
-                  <span key={`w-${edgeKey(e.a, e.b)}`} className="absolute -translate-x-1/2 -translate-y-1/2 px-1 rounded-[3px] bg-[var(--glass)] text-[10px] tabular-nums"
-                    style={{ left: `${((p.x + q.x) / 2) * 100}%`, top: `${((p.y + q.y) / 2) * 100}%`, color: st === "active" ? "var(--compare)" : "var(--phosphor-dim)" }}>
+                  <span key={`w-${edgeKey(e.a, e.b)}`} className="fade-in absolute -translate-x-1/2 -translate-y-1/2 px-1 rounded-[3px] bg-[var(--glass)] text-[10px] tabular-nums"
+                    style={{ ...at(edgesAt), left: `${((p.x + q.x) / 2) * 100}%`, top: `${((p.y + q.y) / 2) * 100}%`, color: st === "active" ? "var(--compare)" : "var(--phosphor-dim)" }}>
                     {e.w}
                   </span>
                 );
               })}
 
-              {view.nodes.map((n) => {
+              {view.nodes.map((n, i) => {
                 const st = view.nodeState[n.id];
                 if (st === "hidden") return null;
                 const look = NODE[st];
                 return (
                   <div key={n.id} data-testid="node" data-id={n.id} data-state={st}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
-                    style={{ left: `${n.x * 100}%`, top: `${n.y * 100}%` }}>
+                    className="node-pop absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+                    style={{ ...at(nodeAt(i)), left: `${n.x * 100}%`, top: `${n.y * 100}%` }}>
                     <span className="grid place-items-center w-9 h-9 sm:w-10 sm:h-10 rounded-full text-[12px] sm:text-[13px] font-semibold tabular-nums transition-[background,box-shadow,color] duration-200"
                       style={{
                         // solid glass under the tint, so edges never show through and cross the label

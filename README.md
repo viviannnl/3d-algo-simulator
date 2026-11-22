@@ -41,6 +41,19 @@ input ──▶ Algorithm.trace() ──▶ Step[] ──▶ buildSteps() ──
 - **Shuffle & custom input** — reshuffle, pick array size (6/8/10/12), or type your own.
 - **Keyboard** — `space` play/pause · `←/→` step · `s` shuffle.
 
+## Motion
+
+- **First visit** — the screen settles in as one loose cascade (~1.5s): top bar and
+  course, then the lesson header, the CRT bezel and telemetry module, the transport.
+  Meanwhile the tube boots ("AV-1 · warming up"), the picture opens, and the bars
+  rise from the baseline left to right (graph/tree nodes pop in, edges follow).
+- **Changing lesson** — no replay of the cascade; the CRT changes channel
+  ("CH 03.3 · DIJKSTRA") and the new picture fills in.
+- **New input** (shuffle, custom, target, new graph) — a burst of static, then the
+  picture rises again. Stepping and scrubbing never replay an entrance.
+- Transform + opacity only, every piece ≤ 400ms; `prefers-reduced-motion` turns all
+  of it off (content is simply there). Timeline lives in `lib/motion.ts`.
+
 ## Project layout
 
 ```
@@ -87,13 +100,13 @@ WCAG 2.1 AA + a Tab walk, measured JS coverage, and a strict console.
 
 ```bash
 cd e2e && npm install            # once (uses your installed Google Chrome)
-npx playwright test              # 142 tests (141 run + 1 phone-only skip on desktop), ~2–3 min
+npx playwright test              # 148 tests (147 run + 1 phone-only skip on desktop), ~3 min
 npx playwright test --update-snapshots   # ONLY after an intended design change — inspect the diff first
 rm -rf .coverage && npx playwright test && node coverage-report.mjs   # coverage of the app's own JS
 npx playwright show-report       # HTML report, traces for failures
 ```
 
-Current: **141 passing**, 100% of app functions executed (99.8% of code). On a machine deep in swap a
+Current: **147 passing**, 100% of app functions executed. On a machine deep in swap a
 single test can stall or fail during browser setup; it passes on rerun (see the `workers` note in the config).
 Baselines are per-OS (`*-darwin.png`); generate Linux ones in CI's image before gating on them.
 

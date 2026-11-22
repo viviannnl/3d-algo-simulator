@@ -142,7 +142,7 @@ img, svg, video, canvas { display: block; max-width: 100%; }
   45% { transform: scaleY(0.006) scaleX(1); opacity: 1; filter: brightness(3); }
   100% { transform: none; opacity: 1; filter: none; }
 }
-.crt-on { animation: crt-on 420ms var(--ease-out) both; transform-origin: center; }
+.crt-on { animation: crt-on 400ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); transform-origin: center; }
 
 /* completion: one bright beam sweeps down the glass */
 @keyframes crt-sweep {
@@ -154,6 +154,69 @@ img, svg, video, canvas { display: block; max-width: 100%; }
   position: absolute; left: 0; right: 0; top: 0; height: 40%; z-index: 30; pointer-events: none;
   background: linear-gradient(180deg, transparent, rgba(143, 179, 138, 0.16) 70%, rgba(214, 236, 208, 0.35) 98%, transparent);
   animation: crt-sweep 900ms var(--ease-out) both;
+}
+
+/* --- Entrance choreography ---------------------------------------------------
+   First visit: regions rise in on a loose cascade (each sets --d, its delay), the
+   CRT boots, then the picture fills in. Transform + opacity only; every piece is
+   ≤ 400ms, the whole sequence ~1.4s. Later lesson switches only "change channel".
+   Fill mode is `backwards`, not `both`: hidden during the delay, then the element
+   returns to its normal style — a held end transform keeps it on a compositor
+   layer, which changes how its text is antialiased. Overlays keep `both` (they end hidden). */
+@keyframes enter-rise {
+  from { opacity: 0; transform: translateY(var(--rise, 10px)); }
+  to { opacity: 1; transform: none; }
+}
+.enter { animation: enter-rise 400ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+.enter-down { --rise: -8px; }
+
+@keyframes enter-module {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.enter-module { animation: enter-module 400ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+
+/* bars grow from the baseline; their value labels follow */
+@keyframes bar-rise { from { transform: scaleY(0); } to { transform: none; } }
+.bar-rise { transform-origin: bottom; animation: bar-rise 380ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+@keyframes fade-up { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fade-up 240ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+
+/* graph and tree nodes pop in; edges fade in after them */
+@keyframes node-pop { from { opacity: 0; transform: scale(0.6); } to { opacity: 1; transform: none; } }
+.node-pop { animation: node-pop 320ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation: fade-in 320ms var(--ease-out) backwards; animation-delay: var(--d, 0ms); }
+
+/* boot readout: the tube warms up before the picture opens (first visit only) */
+@keyframes boot-out { 0%, 78% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+@keyframes boot-fill { from { transform: scaleX(0); } to { transform: none; } }
+.crt-boot {
+  position: absolute; inset: 0; z-index: 35; pointer-events: none;
+  display: grid; place-items: center; align-content: center; gap: 10px;
+  animation: boot-out 760ms linear both; animation-delay: var(--d, 0ms);
+}
+.crt-boot-bar { width: 132px; height: 6px; border-radius: 2px; box-shadow: inset 0 0 0 1px var(--phosphor-line); overflow: hidden; }
+.crt-boot-bar > span {
+  display: block; height: 100%; background: var(--phosphor); box-shadow: var(--glow-tight);
+  transform-origin: left; animation: boot-fill 560ms steps(11, end) both; animation-delay: var(--d, 0ms);
+}
+
+/* lesson switch: a channel-change flash with the new lesson's name */
+@keyframes channel { 0% { opacity: 1; } 55% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.crt-channel {
+  position: absolute; inset: 0; z-index: 35; pointer-events: none;
+  display: grid; place-items: center;
+  background: radial-gradient(ellipse at center, rgba(232, 155, 60, 0.10), transparent 70%), var(--glass);
+  animation: channel 380ms ease-out both;
+}
+/* new input: a short burst of static over the glass */
+@keyframes static-out { from { opacity: 0.55; } to { opacity: 0; visibility: hidden; } }
+.crt-static {
+  position: absolute; inset: 0; z-index: 35; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='s'><feTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.62  0 0 0 0 0.25  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23s)'/></svg>");
+  mix-blend-mode: screen;
+  animation: static-out 260ms ease-out both;
 }
 
 @keyframes led-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
@@ -179,5 +242,7 @@ img, svg, video, canvas { display: block; max-width: 100%; }
 .scroll-quiet::-webkit-scrollbar-thumb { background: var(--seam-strong); border: 2px solid transparent; border-radius: 8px; background-clip: padding-box; }
 
 @media (prefers-reduced-motion: reduce) {
-  .led-pulse, .crt-sweep, .crt-on { animation: none; }
+  /* no choreography at all: everything is simply there (delays would otherwise hold it hidden) */
+  .led-pulse, .crt-sweep, .crt-on, .enter, .enter-module, .bar-rise, .fade-up, .node-pop, .fade-in { animation: none; }
+  .crt-boot, .crt-channel, .crt-static { display: none; }
 }

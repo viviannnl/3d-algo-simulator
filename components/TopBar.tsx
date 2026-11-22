@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { T, at } from "@/lib/motion";
 
-export function TopBar() {
+export function TopBar({ intro = false }: { intro?: boolean }) {
   return (
-    <header className="shrink-0 flex items-center h-14 px-5 sm:px-8 border-b border-[var(--seam)] relative z-30">
+    <header className={`shrink-0 flex items-center h-14 px-5 sm:px-8 border-b border-[var(--seam)] relative z-30 ${intro ? "enter enter-down" : ""}`} style={at(T.topbar)}>
       <Link href="/" className="flex items-center gap-2.5 rounded-md text-[var(--ink)] transition-opacity hover:opacity-75">
         {/* tiny monitor mark */}
         <span aria-hidden="true" className="relative w-[22px] h-[18px] rounded-[5px] bg-[var(--chassis-raised)] border border-[var(--seam-strong)] shadow-[var(--shadow-key)] grid place-items-center">

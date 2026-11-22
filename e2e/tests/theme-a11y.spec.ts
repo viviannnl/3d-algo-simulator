@@ -120,7 +120,7 @@ test("transport buttons: hover differs from rest, disabled is dimmed with not-al
   expect(s.opacity).toBeLessThan(1);
 });
 
-test("reduced motion: transitions, pulses and the CRT power-on are switched off", async ({ browser }) => {
+test("reduced motion: transitions, pulses, the entrance cascade and the CRT boot are switched off", async ({ browser }) => {
   const ctx = await browser.newContext({ reducedMotion: "reduce" });
   const page = await ctx.newPage();
   await page.goto("/algorithms/bubble-sort");
@@ -128,10 +128,16 @@ test("reduced motion: transitions, pulses and the CRT power-on are switched off"
   const r = await page.evaluate(() => ({
     pulse: getComputedStyle(document.querySelector(".led-pulse")!).animationName,
     powerOn: getComputedStyle(document.querySelector(".crt-on")!).animationName,
+    entrance: getComputedStyle(document.querySelector(".enter")!).animationName,
+    bars: getComputedStyle(document.querySelector("[data-testid=bar-body]")!).animationName,
+    boot: getComputedStyle(document.querySelector("[data-testid=crt-boot]")!).display,
     transition: parseFloat(getComputedStyle(document.querySelector("button")!).transitionDuration),
   }));
   expect(r.pulse).toBe("none");
   expect(r.powerOn).toBe("none");
+  expect(r.entrance).toBe("none"); // no cascade: content is simply there
+  expect(r.bars).toBe("none");
+  expect(r.boot).toBe("none");
   expect(r.transition).toBeLessThan(0.01);
   await ctx.close();
 });

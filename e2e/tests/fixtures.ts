@@ -79,8 +79,15 @@ export async function open(page: Page, url = "/") {
   } else {
     await page.locator("main").waitFor();
   }
-  // Settle the CRT power-on (a one-shot CSS animation) so axe and screenshots see the final glass.
-  // Looping animations (status LEDs) never finish, so only finite ones are awaited.
+  await settled(page);
+}
+
+/**
+ * Wait for one-shot animations (entrance cascade, CRT boot, bars rising after new input)
+ * to finish — what a person waits for before reading the screen. Looping animations
+ * (status LEDs) never finish, so only finite ones are awaited.
+ */
+export async function settled(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((a) =>
     a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
 }
@@ -118,7 +125,8 @@ export async function stepForward(page: Page, n: number) {
 }
 
 /** Rendered bar heights in px, in visual order. */
-export const barHeights = (page: Page) =>
+export const barHeights = async (page: Page) => (await settled(page), barHeightsNow(page));
+const barHeightsNow = (page: Page) =>
   page.getByTestId("bar-body").evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height));
 
 export type { Locator };

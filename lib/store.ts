@@ -60,6 +60,16 @@ const inputOf = (s: Pick<VisualizerState, "input" | "target" | "graphNodes" | "g
 const initialInput = { input: DEFAULT_VALUES, target: DEFAULT_TARGET, graphNodes: DEFAULT_NODES, graphSeed: DEFAULT_SEED };
 const initial = compute(bubbleSort, inputOf(initialInput));
 
+/**
+ * A lesson's starting state, computed without touching the store. The page renders
+ * this until the store has loaded the slug, so the server HTML and the first paint
+ * show the right lesson (not whatever the store held — previously always Bubble Sort).
+ */
+export function initialFor(slug: string) {
+  const algo = algorithmsBySlug[slug] ?? bubbleSort;
+  return { algo, ...initialInput, ...compute(algo, inputOf(initialInput)), currentStep: 0, isPlaying: false };
+}
+
 export const useVisualizer = create<VisualizerState>((set, get) => {
   /** Rebuild the trace from a (partial) new input and rewind. */
   const rebuild = (patch: Partial<Pick<VisualizerState, "input" | "target" | "graphNodes" | "graphSeed">>, algo = get().algo) => {

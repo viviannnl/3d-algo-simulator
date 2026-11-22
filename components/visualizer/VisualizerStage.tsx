@@ -1,18 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import type { ArrayView, DerivedStep } from "@/lib/types";
 import { Strip } from "./NetworkStage";
+import { CrtTransition, pictureOpens } from "./CrtTransition";
+import { T, at, pictureStart, pictureStep, stagger, type StageMode } from "@/lib/motion";
 
 interface Props {
   view?: ArrayView;
   derived?: DerivedStep;
   title?: string;
+  /** identity of what is on the glass; a change replays the stage transition */
+  stageKey?: string;
+  mode?: StageMode;
+  channel?: string;
 }
 
 const GRIDLINES = [1, 0.75, 0.5, 0.25];
 
-export function VisualizerStage({ view, derived, title = "sort trace" }: Props) {
+export function VisualizerStage({ view, derived, title = "sort trace", stageKey = "", mode = "retune", channel = "" }: Props) {
+  // The rise-in classes come off once this input's entrance has finished: a swap moves a
+  // bar's DOM node, and Chrome restarts CSS animations on moved nodes — the bar would regrow.
+  const [risenKey, setRisenKey] = useState("");
+  const rising = risenKey !== stageKey;
   if (!view) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -39,11 +50,12 @@ export function VisualizerStage({ view, derived, title = "sort trace" }: Props) 
 
   return (
     <div className="flex-1 min-h-[380px] sm:min-h-[440px] lg:min-h-0 flex p-3 sm:p-5 lg:pr-3">
-      <div className="bezel flex-1 flex min-w-0">
+      <div className={`bezel flex-1 flex min-w-0 ${mode === "intro" ? "enter-module" : ""}`} style={at(T.stage)}>
         <div className="glass glass-grid flex-1 min-w-0">
           {done && <div key="sweep" className="crt-sweep" aria-hidden="true" />}
+          <CrtTransition key={`t-${stageKey}`} mode={mode} channel={channel} />
 
-          <div className="crt-on absolute inset-0 flex flex-col px-5 sm:px-8 pt-5 sm:pt-6 pb-4 z-10 font-mono">
+          <div key={stageKey} className={`${mode === "retune" ? "" : "crt-on"} absolute inset-0 flex flex-col px-5 sm:px-8 pt-5 sm:pt-6 pb-4 z-10 font-mono`} style={at(pictureOpens(mode))}>
             <div className="flex items-center justify-between mb-3 text-[10px] sm:text-[11px] tracking-[0.12em] uppercase">
               <span className="flex items-center gap-2 text-[var(--phosphor)] phosphor-text">
                 <span className="led led-pulse bg-[var(--phosphor)] text-[var(--phosphor)] !shadow-[var(--glow-tight)]" />
@@ -119,10 +131,14 @@ export function VisualizerStage({ view, derived, title = "sort trace" }: Props) 
                         style={{ containerType: "inline-size", opacity: outside ? 0.28 : 1 }}
                         data-testid="bar" data-value={val} data-state={state}>
                         {/* value label floats just above the bar top; font scales with the column (cqw) so narrow bars never overlap */}
-                        <motion.span layout="position" className="absolute left-0 right-0 text-center font-medium tabular-nums whitespace-nowrap"
-                          style={{ bottom: `calc(${heightPct}% + 6px)`, color, fontSize: "clamp(7px, 26cqw, 13px)", textShadow: "var(--glow-tight)" }}>{val}</motion.span>
+                        <motion.span layout="position"
+                          // the last label is the last thing to settle — then the entrance is over for this input
+                          onAnimationEnd={idx === n - 1 ? (e) => { if (e.animationName === "fade-up") setRisenKey(stageKey); } : undefined}
+                          className={`${rising ? "fade-up" : ""} absolute left-0 right-0 text-center font-medium tabular-nums whitespace-nowrap`}
+                          style={{ ...(at(stagger(pictureStart(mode), idx, pictureStep(mode), 12) + 220) as object), bottom: `calc(${heightPct}% + 6px)`, color, fontSize: "clamp(7px, 26cqw, 13px)", textShadow: "var(--glow-tight)" }}>{val}</motion.span>
                         {/* the beam: a slim column, not a slab */}
-                        <div data-testid="bar-body" className="absolute bottom-0 left-[16%] right-[16%] rounded-t-[3px] transition-[background,box-shadow] duration-200" style={{
+                        <div data-testid="bar-body" className={`${rising ? "bar-rise" : ""} absolute bottom-0 left-[16%] right-[16%] rounded-t-[3px] transition-[background,box-shadow] duration-200`} style={{
+                          ...at(stagger(pictureStart(mode), idx, pictureStep(mode), 12)),
                           height: `${heightPct}%`,
                           background: `linear-gradient(to top, color-mix(in srgb, ${dim} 35%, transparent), ${dim})`,
                           boxShadow: `inset 1px 0 0 color-mix(in srgb, ${color} 50%, transparent), inset -1px 0 0 color-mix(in srgb, ${color} 50%, transparent)${lit ? `, 0 0 26px -6px ${color}, 0 -6px 30px -10px ${color}` : ""}`,

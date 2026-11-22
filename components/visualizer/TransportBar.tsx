@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { T, at } from "@/lib/motion";
 
 interface Props {
   isPlaying: boolean;
@@ -15,6 +16,7 @@ interface Props {
   onSpeedChange: (speed: number) => void;
   /** the next playable lesson — becomes the lit key once this one finishes */
   next?: { slug: string; name: string };
+  intro?: boolean;
 }
 
 const Icon = {
@@ -25,14 +27,14 @@ const Icon = {
   replay: <svg aria-hidden="true" viewBox="0 0 16 16" className="w-3.5 h-3.5"><path d="M3 8a5 5 0 1 0 1.6-3.7M3 2.5v3h3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 };
 
-export function TransportBar({ isPlaying, currentStep, totalSteps, speed, onPlay, onPause, onStepForward, onStepBack, onScrub, onSpeedChange, next }: Props) {
+export function TransportBar({ isPlaying, currentStep, totalSteps, speed, onPlay, onPause, onStepForward, onStepBack, onScrub, onSpeedChange, next, intro = false }: Props) {
   const atStart = currentStep === 0;
   const atEnd = currentStep === totalSteps;
   const progressPct = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
   const pad = String(totalSteps).length;
 
   return (
-    <div className="shrink-0 px-3 sm:px-5 lg:pr-3 pb-4 relative z-20">
+    <div data-testid="transport" className={`shrink-0 px-3 sm:px-5 lg:pr-3 pb-4 relative z-20 ${intro ? "enter" : ""}`} style={at(T.transport)}>
       <div className="flex items-center gap-4 px-2 pt-1 pb-4">
         <span className="label w-5 text-right tabular-nums">0</span>
         <div className="flex-1 relative h-7 flex items-center">

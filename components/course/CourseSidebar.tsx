@@ -5,6 +5,7 @@ import { useState } from "react";
 import { catalog } from "@/lib/algorithms";
 import { playable, pad2 } from "@/lib/course";
 import { useCompleted } from "@/lib/progress";
+import { T, at, stagger } from "@/lib/motion";
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg aria-hidden="true" viewBox="0 0 10 10" className={`w-2.5 h-2.5 shrink-0 transition-transform duration-150 ${open ? "rotate-90" : ""}`}>
@@ -32,7 +33,8 @@ function LessonIcon({ state }: { state: "done" | "current" | "todo" | "soon" }) 
   return <span aria-hidden="true" className={`w-3.5 h-3 shrink-0 rounded-[3px] border ${state === "soon" ? "border-[var(--seam)]" : "border-[var(--ink-3)]"}`} />;
 }
 
-export function CourseSidebar({ current }: { current: string }) {
+export function CourseSidebar({ current, intro = false }: { current: string; intro?: boolean }) {
+  const enter = intro ? "enter" : "";
   const completed = useCompleted();
   const currentChapter = catalog.find((c) => c.algos.some((a) => a.slug === current))?.id;
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() => (currentChapter ? { [currentChapter]: true } : {}));
@@ -43,7 +45,7 @@ export function CourseSidebar({ current }: { current: string }) {
   return (
     <nav aria-label="Course" data-testid="course-sidebar"
       className="lg:w-[256px] shrink-0 flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-[var(--seam)]">
-      <div className="flex items-center justify-between px-5 pt-4 pb-3">
+      <div className={`flex items-center justify-between px-5 pt-4 pb-3 ${enter}`} style={at(T.sidebar)}>
         <button type="button" onClick={() => setMobileOpen((o) => !o)} aria-expanded={mobileOpen} aria-controls="course-tree"
           className="lg:hidden flex items-center gap-2 rounded-md font-display text-[22px] leading-none text-[var(--ink)]">
           <Chevron open={mobileOpen} /> Course
@@ -57,7 +59,7 @@ export function CourseSidebar({ current }: { current: string }) {
           const open = !!expanded[chapter.id];
           const chapterDone = chapter.algos.filter((a) => completed.includes(a.slug)).length;
           return (
-            <div key={chapter.id} className="mb-1">
+            <div key={chapter.id} className={`mb-1 ${enter}`} style={at(stagger(T.sidebar + 60, ci, 50))}>
               <button type="button" onClick={() => setExpanded((e) => ({ ...e, [chapter.id]: !open }))} aria-expanded={open}
                 className="w-full flex items-center gap-2 px-2 py-2 rounded-md text-left text-[var(--ink-2)] hover:bg-[var(--chassis-sunk)] transition-colors duration-150">
                 <Chevron open={open} />
@@ -99,7 +101,7 @@ export function CourseSidebar({ current }: { current: string }) {
         })}
       </div>
 
-      <div className={`${mobileOpen ? "block" : "hidden"} lg:block px-5 py-3 border-t border-[var(--seam)]`} data-testid="course-progress">
+      <div className={`${mobileOpen ? "block" : "hidden"} lg:block px-5 py-3 border-t border-[var(--seam)] ${enter}`} style={at(T.sidebar + 300)} data-testid="course-progress">
         <div className="flex items-center justify-between mb-2">
           <span className="label">progress</span>
           <span className="font-mono text-[12px] tabular-nums text-[var(--ink)]">{done} / {playable.length}</span>
