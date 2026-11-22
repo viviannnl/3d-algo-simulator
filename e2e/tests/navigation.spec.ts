@@ -24,7 +24,7 @@ for (const a of ALGOS) {
 test("deep link loads the right lesson directly", async ({ page }) => {
   await open(page, "/algorithms/quick-sort");
   await expect(title(page)).toHaveText("Quick Sort");
-  await expect(page.getByTestId("lesson-crumb")).toContainText("Lesson 4 of 5");
+  await expect(page.getByTestId("lesson-crumb")).toContainText("Lesson 4 of 7");
   await expect(page.getByTestId("pseudo-line").first()).toContainText("partition(lo, hi):");
 });
 
@@ -57,7 +57,7 @@ test("next-lesson key moves through the course and lights up when the lesson is 
 });
 
 test("the last playable lesson has no next key", async ({ page }) => {
-  await open(page, "/algorithms/quick-sort");
+  await open(page, "/algorithms/tree-traversal");
   await expect(page.getByTestId("next-lesson")).toHaveCount(0);
 });
 
@@ -81,4 +81,12 @@ test("on phones the course tree folds away behind a Course button @responsive", 
   await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await sidebar(page).getByRole("link", { name: "Insertion Sort" }).click();
   await expect(page).toHaveURL(/insertion-sort$/);
+});
+
+test("next-lesson key crosses chapters (last sort → first search)", async ({ page }) => {
+  await open(page, "/algorithms/shell-sort");
+  await page.getByTestId("next-lesson").click();
+  await expect(page).toHaveURL(/linear-search$/);
+  await expect(page.getByTestId("lesson-crumb")).toContainText("02. Searching");
+  await expect(sidebar(page).getByRole("button", { name: /Searching/ })).toHaveAttribute("aria-expanded", "true");
 });

@@ -15,7 +15,10 @@ test("/ redirects into the first lesson (no landing page)", async ({ request }) 
   expect(followed.url()).toMatch(/\/algorithms\/bubble-sort$/);
 });
 
-for (const slug of ["bubble-sort", "insertion-sort", "selection-sort", "quick-sort"]) {
+for (const slug of [
+  "bubble-sort", "insertion-sort", "selection-sort", "quick-sort", "merge-sort", "heap-sort", "shell-sort",
+  "linear-search", "binary-search", "bfs", "dfs", "dijkstra", "bst-insert", "tree-traversal",
+]) {
   test(`${slug} is served`, async ({ request }) => {
     expect((await request.get(`/algorithms/${slug}`)).status()).toBe(200);
   });
@@ -26,5 +29,5 @@ test("unknown slug is a 404, not a silent fallback", async ({ request }) => {
 });
 
 test("roadmap ('soon') slug is a 404 until it is implemented", async ({ request }) => {
-  expect((await request.get("/algorithms/merge-sort")).status()).toBe(404);
+  expect((await request.get("/algorithms/topological-sort")).status()).toBe(404);
 });

@@ -1,16 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import type { StepView, DerivedStep } from "@/lib/viewModel";
+import type { ArrayView, DerivedStep } from "@/lib/types";
+import { Strip } from "./NetworkStage";
 
 interface Props {
-  view?: StepView;
+  view?: ArrayView;
   derived?: DerivedStep;
+  title?: string;
 }
 
 const GRIDLINES = [1, 0.75, 0.5, 0.25];
 
-export function VisualizerStage({ view, derived }: Props) {
+export function VisualizerStage({ view, derived, title = "sort trace" }: Props) {
   if (!view) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -20,12 +22,16 @@ export function VisualizerStage({ view, derived }: Props) {
   }
 
   const n = view.dataNodes.length;
-  const maxVal = Math.max(...view.dataNodes, 1);
+  const target = view.target;
+  // searches scale to the target too, so its line always lands on the glass
+  const maxVal = Math.max(...view.dataNodes, target ?? 1, 1);
   const action = derived?.action;
+  const range = view.range;
+  const targetPct = target !== undefined && target >= 0 ? (target / maxVal) * 90 : undefined;
   const hasPair = view.activeNodes.length === 2;
   const lo = hasPair ? Math.min(...view.activeNodes) : -1;
   const hi = hasPair ? Math.max(...view.activeNodes) : -1;
-  const done = action === "done";
+  const done = action === "done" || action === "found";
 
   const activeColor = action === "swap" ? "var(--swap)" : action === "compare" ? "var(--compare)" : "var(--phosphor)";
   const activeDim = action === "swap" ? "var(--swap-dim)" : action === "compare" ? "var(--compare-dim)" : "var(--idle-dim)";
@@ -41,7 +47,7 @@ export function VisualizerStage({ view, derived }: Props) {
             <div className="flex items-center justify-between mb-3 text-[10px] sm:text-[11px] tracking-[0.12em] uppercase">
               <span className="flex items-center gap-2 text-[var(--phosphor)] phosphor-text">
                 <span className="led led-pulse bg-[var(--phosphor)] text-[var(--phosphor)] !shadow-[var(--glow-tight)]" />
-                array[{n}] · sort trace
+                array[{n}] · {title}
               </span>
               <span className="text-[var(--phosphor-dim)]">max {maxVal} · idx 0–{n - 1}</span>
             </div>
@@ -82,11 +88,19 @@ export function VisualizerStage({ view, derived }: Props) {
                   <div key={g} className="absolute left-0 right-0 border-t border-dashed" style={{ top: `${(1 - g) * 100}%`, borderColor: "var(--phosphor-grid)" }} />
                 ))}
                 <div className="absolute left-0 right-0 bottom-0 h-px bg-[var(--phosphor-line)]" />
+                {targetPct !== undefined && (
+                  <div data-testid="target-line" className="absolute left-0 right-0 z-20 pointer-events-none border-t border-dashed border-[var(--signal)]" style={{ bottom: `${targetPct}%` }}>
+                    <span className="absolute left-0 -top-[18px] px-1.5 rounded-[3px] bg-[var(--glass)] text-[10px] tracking-[0.12em] uppercase text-[var(--signal-hi)]">target {target}</span>
+                  </div>
+                )}
 
                 <div className="absolute inset-0 flex items-end gap-[1.5%]">
                   {view.dataNodes.map((val, idx) => {
                     const isActive = view.activeNodes.includes(idx);
-                    const isSorted = view.sortedNodes.includes(idx);
+                    const isFocus = view.focus === idx;
+                    const isFound = view.found === idx;
+                    const isSorted = view.sortedNodes.includes(idx) || isFound;
+                    const outside = range !== undefined && (idx < range[0] || idx > range[1]);
                     // Scale to 90% of the chart so the label always has headroom above
                     // the tallest bar. Height is a pure function of value — no clamping.
                     const heightPct = Math.max((val / maxVal) * 90, 5);
@@ -94,12 +108,16 @@ export function VisualizerStage({ view, derived }: Props) {
                     let color = "var(--idle)";
                     let dim = "var(--idle-dim)";
                     if (isActive) { color = activeColor; dim = activeDim; }
+                    else if (isFocus && action === "write") { color = "var(--swap)"; dim = "var(--swap-dim)"; }
+                    else if (isFocus && !isFound) { color = "var(--compare)"; dim = "var(--compare-dim)"; }
                     else if (isSorted) { color = "var(--sorted)"; dim = "var(--sorted-dim)"; }
+                    const lit = isActive || isFocus;
+                    const state = isActive ? (action === "swap" ? "swap" : "compare") : isFound ? "found" : isFocus ? (action === "write" ? "write" : "probe") : isSorted ? "sorted" : outside ? "out" : "idle";
 
                     return (
-                      <motion.div key={view.ids[idx]} layout transition={{ type: "spring", stiffness: 520, damping: 34 }} className="relative flex-1 h-full"
-                        style={{ containerType: "inline-size" }}
-                        data-testid="bar" data-value={val} data-state={isActive ? (action === "swap" ? "swap" : "compare") : isSorted ? "sorted" : "idle"}>
+                      <motion.div key={view.ids[idx]} layout transition={{ type: "spring", stiffness: 520, damping: 34 }} className="relative flex-1 h-full transition-opacity duration-200"
+                        style={{ containerType: "inline-size", opacity: outside ? 0.28 : 1 }}
+                        data-testid="bar" data-value={val} data-state={state}>
                         {/* value label floats just above the bar top; font scales with the column (cqw) so narrow bars never overlap */}
                         <motion.span layout="position" className="absolute left-0 right-0 text-center font-medium tabular-nums whitespace-nowrap"
                           style={{ bottom: `calc(${heightPct}% + 6px)`, color, fontSize: "clamp(7px, 26cqw, 13px)", textShadow: "var(--glow-tight)" }}>{val}</motion.span>
@@ -107,7 +125,7 @@ export function VisualizerStage({ view, derived }: Props) {
                         <div data-testid="bar-body" className="absolute bottom-0 left-[16%] right-[16%] rounded-t-[3px] transition-[background,box-shadow] duration-200" style={{
                           height: `${heightPct}%`,
                           background: `linear-gradient(to top, color-mix(in srgb, ${dim} 35%, transparent), ${dim})`,
-                          boxShadow: `inset 1px 0 0 color-mix(in srgb, ${color} 50%, transparent), inset -1px 0 0 color-mix(in srgb, ${color} 50%, transparent)${isActive ? `, 0 0 26px -6px ${color}, 0 -6px 30px -10px ${color}` : ""}`,
+                          boxShadow: `inset 1px 0 0 color-mix(in srgb, ${color} 50%, transparent), inset -1px 0 0 color-mix(in srgb, ${color} 50%, transparent)${lit ? `, 0 0 26px -6px ${color}, 0 -6px 30px -10px ${color}` : ""}`,
                         }}>
                           {/* the lit edge of the beam — tight glow, no wide halo */}
                           <div className="absolute -top-px left-0 right-0 h-[2px] rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
@@ -123,9 +141,9 @@ export function VisualizerStage({ view, derived }: Props) {
             <div className="flex mt-2 pl-10">
               <div className="flex-1 flex gap-[1.5%]">
                 {view.dataNodes.map((_, idx) => {
-                  const isActive = view.activeNodes.includes(idx);
-                  const isSorted = view.sortedNodes.includes(idx);
-                  const col = isActive ? activeColor : isSorted ? "var(--sorted)" : "var(--phosphor-dim)";
+                  const isActive = view.activeNodes.includes(idx) || view.focus === idx;
+                  const isSorted = view.sortedNodes.includes(idx) || view.found === idx;
+                  const col = isActive ? (view.activeNodes.length ? activeColor : "var(--compare)") : isSorted ? "var(--sorted)" : "var(--phosphor-dim)";
                   return (
                     <div key={idx} className="flex-1 flex justify-center">
                       <span className="text-[10px] tabular-nums px-1 rounded-[2px]" style={{ color: col, background: isActive ? activeDim : "transparent" }}>{idx}</span>
@@ -134,6 +152,7 @@ export function VisualizerStage({ view, derived }: Props) {
                 })}
               </div>
             </div>
+            {view.buffer && <div className="mt-2"><Strip label="buffer" items={view.buffer.map(String)} testId="merge-buffer" /></div>}
           </div>
         </div>
       </div>

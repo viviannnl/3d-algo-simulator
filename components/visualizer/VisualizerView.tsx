@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
 import { VisualizerStage } from "./VisualizerStage";
+import { NetworkStage } from "./NetworkStage";
 import { TelemetryRail } from "./TelemetryRail";
 import { TransportBar } from "./TransportBar";
 import { InputControls } from "./InputControls";
@@ -10,6 +11,8 @@ import { CourseSidebar } from "@/components/course/CourseSidebar";
 import { useVisualizer } from "@/lib/store";
 import { locate, pad2 } from "@/lib/course";
 import { markComplete } from "@/lib/progress";
+
+const STAGE_TITLE: Record<string, string> = { graph: "graph trace", tree: "tree trace" };
 
 function Chip({ children }: { children: React.ReactNode }) {
   return (
@@ -25,8 +28,8 @@ function Kbd({ children }: { children: React.ReactNode }) {
 
 export function VisualizerView({ slug }: { slug: string }) {
   const {
-    algo, input, views, derived, currentStep, totalSteps, isPlaying, speed,
-    load, shuffle, setInput, play, pause, togglePlay, stepForward, stepBack, scrub, setSpeed, tick,
+    algo, input, target, graphNodes, views, derived, currentStep, totalSteps, isPlaying, speed,
+    load, shuffle, setInput, setTarget, play, pause, togglePlay, stepForward, stepBack, scrub, setSpeed, tick,
   } = useVisualizer();
 
   useEffect(() => { load(slug); }, [slug, load]);
@@ -52,11 +55,11 @@ export function VisualizerView({ slug }: { slug: string }) {
       if (e.key === " ") { e.preventDefault(); togglePlay(); }
       else if (e.key === "ArrowRight") { e.preventDefault(); stepForward(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); stepBack(); }
-      else if (e.key.toLowerCase() === "s") { shuffle(input.length); }
+      else if (e.key.toLowerCase() === "s") { shuffle(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [togglePlay, stepForward, stepBack, shuffle, input.length]);
+  }, [togglePlay, stepForward, stepBack, shuffle]);
 
   // watching a lesson to its last frame completes it (sidebar progress)
   useEffect(() => {
@@ -64,6 +67,7 @@ export function VisualizerView({ slug }: { slug: string }) {
   }, [currentStep, totalSteps, algo.slug]);
 
   const loc = locate(algo.slug);
+  const view = views[currentStep];
   const lesson = loc?.chapter.algos[loc.lessonNo - 1];
 
   return (
@@ -99,13 +103,18 @@ export function VisualizerView({ slug }: { slug: string }) {
                   </span>
                 </p>
               </div>
-              <InputControls input={input} onShuffle={shuffle} onSetInput={setInput} />
+              <InputControls kind={algo.kind} input={input} target={target} graphNodes={graphNodes}
+                onShuffle={shuffle} onSetInput={setInput} onSetTarget={setTarget} />
             </div>
           </div>
 
           <div className="flex flex-col lg:flex-row flex-1 min-h-0">
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
-              <VisualizerStage view={views[currentStep]} derived={derived[currentStep]} />
+              {view?.kind === "network" ? (
+                <NetworkStage view={view} derived={derived[currentStep]} title={STAGE_TITLE[algo.kind]} />
+              ) : (
+                <VisualizerStage view={view} derived={derived[currentStep]} title={algo.kind === "search" ? `search for ${target}` : "sort trace"} />
+              )}
               <TransportBar
                 isPlaying={isPlaying} currentStep={currentStep} totalSteps={totalSteps} speed={speed}
                 onPlay={play} onPause={pause} onStepForward={stepForward} onStepBack={stepBack} onScrub={scrub} onSpeedChange={setSpeed}
@@ -115,7 +124,7 @@ export function VisualizerView({ slug }: { slug: string }) {
             <TelemetryRail
               trace={derived} current={currentStep}
               time={algo.complexity.time} space={algo.complexity.space}
-              pseudocode={algo.pseudocode} onSelect={scrub}
+              pseudocode={algo.pseudocode} stats={algo.stats} legend={algo.legend} onSelect={scrub}
             />
           </div>
         </main>

@@ -3,7 +3,7 @@ import { test, expect, open, scrubber, stepForward } from "./fixtures";
 test("course sidebar, every chapter expanded, one lesson completed", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("algoviz.av1.completed", JSON.stringify(["bubble-sort"])));
   await open(page, "/algorithms/insertion-sort");
-  for (const ch of ["Graphs", "Trees"]) await page.getByRole("navigation", { name: "Course" }).getByRole("button", { name: new RegExp(ch) }).click();
+  for (const ch of ["Searching", "Graphs", "Trees"]) await page.getByRole("navigation", { name: "Course" }).getByRole("button", { name: new RegExp(ch) }).click();
   await page.mouse.move(0, 0);
   await expect(page.getByTestId("course-sidebar")).toHaveScreenshot("sidebar.png");
 });
@@ -33,4 +33,26 @@ test("telemetry rail panel at a swap frame", async ({ page }) => {
   await stepForward(page, 2); // compare (0,1) → swap (0,1)
   await page.mouse.move(0, 0);
   await expect(page.getByTestId("telemetry-rail")).toHaveScreenshot("rail-swap.png");
+});
+
+// one shot per new stage kind, at an informative moment
+for (const [name, slug, steps] of [
+  ["merge-buffer", "merge-sort", 30],
+  ["binary-narrowed", "binary-search", 3],
+  ["dijkstra-mid", "dijkstra", 14],
+  ["bst-mid", "bst-insert", 12],
+] as const) {
+  test(`stage — ${name}`, async ({ page }) => {
+    await open(page, `/algorithms/${slug}`);
+    await stepForward(page, steps);
+    await page.mouse.move(0, 0);
+    await expect(page.locator(".bezel").first()).toHaveScreenshot(`${name}.png`);
+  });
+}
+
+test("graph stage on a phone @responsive", async ({ page }) => {
+  await open(page, "/algorithms/dijkstra");
+  await stepForward(page, 8);
+  await page.mouse.move(0, 0);
+  await expect(page.locator(".bezel").first()).toHaveScreenshot("graph-phone.png");
 });

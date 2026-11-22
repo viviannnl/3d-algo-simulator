@@ -1,5 +1,5 @@
-import type { Algorithm, SortStep } from "@/lib/types";
-import { frameAt } from "./engine";
+import type { SortStep } from "@/lib/types";
+import { defineArray } from "./common";
 
 function trace(input: number[]): SortStep[] {
   const steps: SortStep[] = [];
@@ -21,10 +21,11 @@ function trace(input: number[]): SortStep[] {
   return steps;
 }
 
-export const selectionSort: Algorithm = {
+export const selectionSort = defineArray({
   slug: "selection-sort",
   name: "Selection Sort",
   category: "Sorting",
+  kind: "sort",
   summary: "Scans the unsorted region for the smallest value each pass and swaps it into the next sorted slot.",
   complexity: { time: "O(n²)", space: "O(1)" },
   pseudocode: [
@@ -35,5 +36,4 @@ export const selectionSort: Algorithm = {
     "  swap(a[i], a[min]); lock a[i]",
   ],
   trace,
-  frameAt,
-};
+});

@@ -98,7 +98,8 @@ export const sidebar = (page: Page) => page.getByRole("navigation", { name: "Cou
 export const scrubber = (page: Page) => page.getByRole("slider", { name: "Execution step scrubber" });
 export const bars = (page: Page) => page.getByTestId("bar");
 export const traceRows = (page: Page) => page.getByTestId("trace-row");
-export const stat = (page: Page, name: "step" | "cmp" | "swap" | "sorted") => page.getByTestId(`stat-${name}`);
+/** A rail counter by its label (each algorithm names its own: cmp, swap, write, probes, visited…). */
+export const stat = (page: Page, name: string) => page.getByTestId(`stat-${name}`);
 
 /** Values in left→right visual order (DOM order == array order). */
 export const barValues = (page: Page) => bars(page).evaluateAll((els) => els.map((e) => Number((e as HTMLElement).dataset.value)));

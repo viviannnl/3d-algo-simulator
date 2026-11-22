@@ -29,6 +29,11 @@ async function goToEnd(page: Page) {
 
 // ---------------------------------------------------------------- course (no landing page)
 
+const COURSE = [
+  "bubble-sort", "insertion-sort", "selection-sort", "quick-sort", "merge-sort", "heap-sort", "shell-sort",
+  "linear-search", "binary-search", "bfs", "dfs", "dijkstra", "bst-insert", "tree-traversal",
+];
+
 const progress = (page: Page) => page.getByTestId("course-progress");
 
 test.describe("course", () => {
@@ -36,7 +41,7 @@ test.describe("course", () => {
     await open(page, "/");
     await expect(page).toHaveURL(/\/algorithms\/bubble-sort$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Bubble Sort");
-    await expect(page.getByTestId("lesson-crumb")).toHaveText(/01\. Sorting\s*\/\s*Lesson 1 of 5/);
+    await expect(page.getByTestId("lesson-crumb")).toHaveText(/01\. Sorting\s*\/\s*Lesson 1 of 7/);
     // regression: the trace list used scrollIntoView, which scrolled the whole page down on phones
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
     await expectNoHorizontalOverflow(page);
@@ -44,11 +49,11 @@ test.describe("course", () => {
 
   test("sidebar lists every chapter; only implemented lessons are links, in course order", async ({ page }) => {
     await open(page, "/");
-    for (const ch of ["Graphs", "Trees"]) await sidebar(page).getByRole("button", { name: new RegExp(ch) }).click();
+    for (const ch of ["Searching", "Graphs", "Trees"]) await sidebar(page).getByRole("button", { name: new RegExp(ch) }).click();
     const links = sidebar(page).locator('a[href^="/algorithms/"]');
-    expect(await links.evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual(ALGOS.map((a) => `/algorithms/${a.slug}`));
+    expect(await links.evaluateAll((as) => as.map((a) => a.getAttribute("href")))).toEqual(COURSE.map((slug) => `/algorithms/${slug}`));
     const soon = sidebar(page).locator('[aria-disabled="true"]');
-    await expect(soon).toHaveCount(6);
+    await expect(soon).toHaveCount(2);
     for (const item of await soon.all()) {
       await expect(item).toContainText("soon");
       expect(await item.locator("a").count()).toBe(0);
@@ -66,12 +71,12 @@ test.describe("course", () => {
 
   test("watching a lesson to the end completes it, and progress survives a reload", async ({ page }) => {
     await open(page, "/algorithms/bubble-sort");
-    await expect(progress(page)).toContainText("0 / 4");
+    await expect(progress(page)).toContainText("0 / 14");
     await goToEnd(page);
-    await expect(progress(page)).toContainText("1 / 4");
-    await expect(sidebar(page).getByRole("button", { name: /Sorting/ })).toContainText("1/5");
+    await expect(progress(page)).toContainText("1 / 14");
+    await expect(sidebar(page).getByRole("button", { name: /Sorting/ })).toContainText("1/7");
     await reload(page);
-    await expect(progress(page)).toContainText("1 / 4");
+    await expect(progress(page)).toContainText("1 / 14");
     await sidebar(page).getByRole("link", { name: /Insertion Sort/ }).click();
     await expect(sidebar(page).getByRole("link", { name: /Bubble Sort/ })).toContainText("(completed)");
   });
@@ -79,7 +84,7 @@ test.describe("course", () => {
   test("corrupt or blocked storage never breaks the lesson", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("algoviz.av1.completed", "{not json"));
     await open(page, "/algorithms/bubble-sort");
-    await expect(progress(page)).toContainText("0 / 4");
+    await expect(progress(page)).toContainText("0 / 14");
     await goToEnd(page); // writing must also be harmless
     await expect(page.getByRole("button", { name: "Replay" })).toBeVisible();
   });
@@ -89,9 +94,9 @@ test.describe("course", () => {
       Object.defineProperty(window, "localStorage", { get() { throw new Error("blocked"); } });
     });
     await open(page, "/algorithms/bubble-sort");
-    await expect(progress(page)).toContainText("0 / 4");
+    await expect(progress(page)).toContainText("0 / 14");
     await goToEnd(page);
-    await expect(progress(page)).toContainText("0 / 4");
+    await expect(progress(page)).toContainText("0 / 14");
   });
 });
 

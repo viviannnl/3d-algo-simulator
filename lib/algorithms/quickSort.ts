@@ -1,5 +1,5 @@
-import type { Algorithm, SortStep } from "@/lib/types";
-import { frameAt } from "./engine";
+import type { SortStep } from "@/lib/types";
+import { defineArray } from "./common";
 
 function trace(input: number[]): SortStep[] {
   const steps: SortStep[] = [];
@@ -36,10 +36,11 @@ function trace(input: number[]): SortStep[] {
   return steps;
 }
 
-export const quickSort: Algorithm = {
+export const quickSort = defineArray({
   slug: "quick-sort",
   name: "Quick Sort",
   category: "Sorting",
+  kind: "sort",
   summary: "Picks a pivot, partitions values smaller than it to the left, then recursively sorts each partition.",
   complexity: { time: "O(n log n)", space: "O(log n)" },
   pseudocode: [
@@ -50,5 +51,4 @@ export const quickSort: Algorithm = {
     "  swap(a[i], a[hi])  ← place pivot",
   ],
   trace,
-  frameAt,
-};
+});

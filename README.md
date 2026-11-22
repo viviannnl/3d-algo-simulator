@@ -48,7 +48,8 @@ app/              / → first lesson, lesson route, theme + layout
 components/        TopBar, course/CourseSidebar, visualizer/* (stage, rail, transport, input)
 lib/
   types.ts        Step / Frame / Algorithm contracts
-  algorithms/     trace generators (bubbleSort) + catalog metadata
+  algorithms/     sorts, searches, graphs, trees + the course catalog
+  network.ts      seeded graph generator + recorder for node/edge algorithms
   viewModel.ts    trace → drawable frames + derived telemetry
   store.ts        Zustand playback store
   course.ts       catalog read as a course (location, prev/next lesson)
@@ -74,7 +75,7 @@ npm test          # run the suite
 npm run test:cov  # with coverage
 ```
 
-Current: **550 tests**, ~99% statement coverage on `lib/` (all sort generators 100%).
+Current: **1,022 tests** (adds searches, graph generator + BFS/DFS/Dijkstra — checked against Bellman-Ford — and trees), ~99% statement coverage on `lib/` (all sort generators 100%).
 
 ### Browser (UI) suite — `e2e/`
 
@@ -86,22 +87,33 @@ WCAG 2.1 AA + a Tab walk, measured JS coverage, and a strict console.
 
 ```bash
 cd e2e && npm install            # once (uses your installed Google Chrome)
-npx playwright test              # 100 tests (99 run + 1 phone-only skip on desktop), ~2 min
+npx playwright test              # 142 tests (141 run + 1 phone-only skip on desktop), ~2–3 min
 npx playwright test --update-snapshots   # ONLY after an intended design change — inspect the diff first
 rm -rf .coverage && npx playwright test && node coverage-report.mjs   # coverage of the app's own JS
 npx playwright show-report       # HTML report, traces for failures
 ```
 
-Current: **99 passing, 3/3 consecutive green runs**, 100% of app functions executed.
+Current: **141 passing**, 100% of app functions executed (99.8% of code). On a machine deep in swap a
+single test can stall or fail during browser setup; it passes on rerun (see the `workers` note in the config).
 Baselines are per-OS (`*-darwin.png`); generate Linux ones in CI's image before gating on them.
+
+## Algorithms
+
+| Chapter | Lessons | Stage |
+|---|---|---|
+| 01 Sorting | Bubble, Insertion, Selection, Quick, **Merge** (buffer + writes), **Heap**, **Shell** | bars |
+| 02 Searching | **Linear**, **Binary** (live window + target line) | bars |
+| 03 Graphs | **BFS** (queue), **DFS** (call stack), **Dijkstra** (distances, shortest-path tree) | nodes + edges |
+| 04 Trees | **BST Insert**, **In-order Traversal** | nodes + edges |
+
+Graphs are generated from a seed (connected, no crossing edges), so *New graph* is
+reproducible and tests are deterministic. Every algorithm implements one contract —
+`build(input) → { views, derived }` — so the store, transport and telemetry rail are shared.
 
 ## Roadmap
 
-- [x] Bubble / Insertion / Selection / Quick sort — full traces, 100% covered
-- [ ] Merge sort — needs a write/overwrite step op (not swap-based)
-- [ ] Graph algorithms (BFS/DFS/Dijkstra) — generalize the trace model beyond arrays
-- [ ] Tree algorithms (BST insert, traversal)
-- [ ] Code-sync panel polish, per-algorithm theming
+- [ ] Topological Sort, AVL rotations (listed as "soon" in the course)
+- [ ] Pick the start node by clicking it; weighted-edge editing
 
 ## Design provenance
 

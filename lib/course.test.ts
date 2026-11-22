@@ -10,6 +10,13 @@ describe("course", () => {
     expect(playable.every((a) => a.ready)).toBe(true);
   });
 
+  it("the course runs Sorting → Searching → Graphs → Trees, and lessons cross chapter boundaries", () => {
+    expect(locate("shell-sort")!.next?.slug).toBe("linear-search");
+    expect(locate("binary-search")!.next?.slug).toBe("bfs");
+    expect(locate("dijkstra")!.next?.slug).toBe("bst-insert");
+    expect(locate("bfs")!.chapterNo).toBe(3);
+  });
+
   it("opens on the first playable lesson", () => {
     expect(firstLesson.slug).toBe("bubble-sort");
   });
@@ -19,7 +26,7 @@ describe("course", () => {
     expect(loc.chapter.name).toBe("Sorting");
     expect(loc.chapterNo).toBe(1);
     expect(loc.lessonNo).toBe(3);
-    expect(loc.lessonCount).toBe(5);
+    expect(loc.lessonCount).toBe(7);
     expect(loc.prev?.slug).toBe("insertion-sort");
     expect(loc.next?.slug).toBe("quick-sort");
   });
@@ -30,8 +37,8 @@ describe("course", () => {
   });
 
   it("roadmap lessons are located but never link anywhere playable-adjacent", () => {
-    const loc = locate("dijkstra")!;
-    expect(loc.chapterNo).toBe(2);
+    const loc = locate("topological-sort")!;
+    expect(loc.chapterNo).toBe(3);
     expect(loc.prev).toBeUndefined();
     expect(loc.next).toBeUndefined();
   });

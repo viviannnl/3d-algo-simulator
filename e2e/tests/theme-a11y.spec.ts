@@ -28,7 +28,7 @@ test("cream chassis theme regardless of the OS colour scheme", async ({ browser 
 test("axe: course sidebar with every chapter expanded @responsive", async ({ page }, testInfo) => {
   await open(page, "/");
   if (testInfo.project.name === "mobile") await page.getByRole("button", { name: "Course" }).click();
-  for (const ch of ["Graphs", "Trees"]) await sidebar(page).getByRole("button", { name: new RegExp(ch) }).click();
+  for (const ch of ["Searching", "Graphs", "Trees"]) await sidebar(page).getByRole("button", { name: new RegExp(ch) }).click();
   await scan(page);
 });
 

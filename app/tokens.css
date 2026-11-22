@@ -46,6 +46,8 @@
   --swap-dim: rgba(255, 122, 92, 0.42);
   --sorted: #8FB38A;
   --sorted-dim: rgba(143, 179, 138, 0.26);
+  --sorted-hot: #C4E3BE;         /* node labels on a sage disc */
+  --swap-hot: #FFD0C2;           /* node label on the current (coral) disc */
   --idle: #E89B3C;
   --idle-dim: rgba(232, 155, 60, 0.16);
 

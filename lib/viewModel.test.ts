@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { algorithms } from "@/lib/algorithms";
+import { sorts } from "@/lib/algorithms";
 import { buildSteps, deriveTrace } from "@/lib/viewModel";
 
 const INPUT = [5, 3, 8, 4, 2, 7, 1];
 
-describe.each(algorithms.map((a) => [a.name, a] as const))("viewModel · %s", (_name, algo) => {
+describe.each(sorts.map((a) => [a.name, a] as const))("viewModel · %s", (_name, algo) => {
+  const writes = algo.trace([3, 1, 2]).some((s) => s.type === "write");
   const views = buildSteps(algo, INPUT);
   const derived = deriveTrace(views);
 
@@ -26,6 +27,7 @@ describe.each(algorithms.map((a) => [a.name, a] as const))("viewModel · %s", (_
     }
     expect(derived.at(-1)!.comparisons).toBe(derived.filter((d) => d.action === "compare").length);
     expect(derived.at(-1)!.swaps).toBe(derived.filter((d) => d.action === "swap").length);
+    expect(derived.at(-1)!.stats.write).toBe(derived.filter((d) => d.action === "write").length);
   });
 
   it("every compare/swap row carries the pair it acted on", () => {
@@ -39,6 +41,7 @@ describe.each(algorithms.map((a) => [a.name, a] as const))("viewModel · %s", (_
   });
 
   it("bar identities follow their values through every swap (duplicates stay distinct)", () => {
+    if (writes) return; // writes change a bar's value in place; ids are positions there
     for (const input of [INPUT, [3, 3, 1], [2, 2, 2, 1]]) {
       for (const v of buildSteps(algo, input)) {
         expect(new Set(v.ids).size).toBe(input.length);

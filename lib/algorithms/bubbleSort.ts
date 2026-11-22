@@ -1,5 +1,5 @@
-import type { Algorithm, SortStep } from "@/lib/types";
-import { frameAt } from "./engine";
+import type { SortStep } from "@/lib/types";
+import { defineArray } from "./common";
 
 function trace(input: number[]): SortStep[] {
   const steps: SortStep[] = [];
@@ -26,10 +26,11 @@ function trace(input: number[]): SortStep[] {
   return steps;
 }
 
-export const bubbleSort: Algorithm = {
+export const bubbleSort = defineArray({
   slug: "bubble-sort",
   name: "Bubble Sort",
   category: "Sorting",
+  kind: "sort",
   summary: "Repeatedly steps through the list, compares adjacent pairs, and swaps any out of order. After each pass the largest remaining value bubbles to its final place.",
   complexity: { time: "O(n²)", space: "O(1)" },
   pseudocode: [
@@ -40,5 +41,4 @@ export const bubbleSort: Algorithm = {
     "  lock a[n-i-1] as sorted",
   ],
   trace,
-  frameAt,
-};
+});

@@ -1,5 +1,5 @@
-import type { Algorithm, SortStep } from "@/lib/types";
-import { frameAt } from "./engine";
+import type { SortStep } from "@/lib/types";
+import { defineArray } from "./common";
 
 function trace(input: number[]): SortStep[] {
   const steps: SortStep[] = [];
@@ -25,10 +25,11 @@ function trace(input: number[]): SortStep[] {
   return steps;
 }
 
-export const insertionSort: Algorithm = {
+export const insertionSort = defineArray({
   slug: "insertion-sort",
   name: "Insertion Sort",
   category: "Sorting",
+  kind: "sort",
   summary: "Builds the sorted portion one element at a time, shifting each new value left until it sits in the right spot.",
   complexity: { time: "O(n²)", space: "O(1)" },
   pseudocode: [
@@ -38,5 +39,4 @@ export const insertionSort: Algorithm = {
     "    swap(a[j-1], a[j]); j = j-1",
   ],
   trace,
-  frameAt,
-};
+});
